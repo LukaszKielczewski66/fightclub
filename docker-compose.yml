@@ -18,14 +18,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env.server
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/fightclub
-      - NODE_ENV=development
-      - PORT=8080
-    depends_on:
-      - mongo
     ports:
       - "8080:8080"
+    depends_on:
+      - mongo
 
   client:
     build: ./client
@@ -33,12 +29,10 @@ services:
     restart: unless-stopped
     env_file:
       - .env.client
-    depends_on:
-      - server
     ports:
       - "5173:5173"
-    environment:
-      - VITE_API_BASE=http://localhost:8080
+    depends_on:
+      - server
 
 volumes:
   mongo_data:

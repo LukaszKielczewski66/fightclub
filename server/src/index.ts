@@ -1,19 +1,19 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
+import mongoose from "mongoose";
+import { createApp } from "./app";
+import { env } from "./config/env";
+import { logger } from "./utils/logger";
 
-dotenv.config();
+const app = createApp();
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(cors({ origin: "http://localhost:5173" }));
-app.use(express.json());
-
-app.get("/api/hello", (_req, res) => {
-  res.json({ message: "Hello from Express + TypeScript!" });
-});
-
-app.listen(PORT, () => {
-  console.log(`API running on http://localhost:${PORT}`);
-});
+mongoose
+  .connect(env.MONGO_URI)
+  .then(() => {
+    logger.info("✅ MongoDB connected");
+    app.listen(env.PORT, () =>
+      logger.info(`🚀 Server running on port ${env.PORT}`)
+    );
+  })
+  .catch((err) => {
+    logger.error({ err }, "❌ MongoDB connection failed");
+    process.exit(1);
+  });
