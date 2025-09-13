@@ -2,17 +2,10 @@ import axios from "axios";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || "http://localhost:8080",
-  withCredentials: false,
-  timeout: 10_000
+  timeout: 10000,
 });
 
-api.interceptors.request.use((config) => {
-  return config;
-});
-
-api.interceptors.response.use(
-  (res) => res,
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+export function setAuthToken(token: string | null) {
+  if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  else delete api.defaults.headers.common["Authorization"];
+}

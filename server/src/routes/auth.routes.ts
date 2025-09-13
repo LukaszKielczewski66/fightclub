@@ -5,7 +5,6 @@ import { requireAuth, requireRole } from "../middlewares/auth";
 
 const router = Router();
 
-/** rejestracja */
 router.post("/register", async (req, res) => {
   const { email, name, password } = req.body || {};
   if (!email || !name || !password) return res.status(400).json({ message: "Missing fields" });
@@ -18,7 +17,6 @@ router.post("/register", async (req, res) => {
   return res.status(201).json({ id: user.id, email: user.email, name: user.name, role: user.role });
 });
 
-/** logowanie */
 router.post("/login", async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ message: "Missing credentials" });
@@ -34,14 +32,12 @@ router.post("/login", async (req, res) => {
   return res.json({ accessToken, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
 });
 
-/** tożsamość */
 router.get("/me", requireAuth, async (req, res) => {
   const user = await User.findById(req.user!.id).select("email name role active");
   if (!user) return res.status(404).json({ message: "User not found" });
   res.json({ user });
 });
 
-/** admin route */
 router.get("/admin/ping", requireAuth, requireRole("admin"), (_req, res) => {
   res.json({ ok: true, scope: "admin" });
 });
