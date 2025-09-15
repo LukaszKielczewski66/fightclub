@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes";
+import adminUsersRouter from "@/routes/admin.users.routes";
 
 export const createApp = () => {
   const app = express();
@@ -12,6 +13,9 @@ export const createApp = () => {
   app.get("/api/health", (_req, res) => res.json({ service: "fightclub-api", status: "ok", time: new Date().toISOString() }));
 
   app.use("/api/auth", authRouter);
+
+  // ADMIN 
+  app.use("/api/admin/users", adminUsersRouter);
 
   app.use((_req, res) => res.status(404).json({ message: "Not Found" }));
   return app;
