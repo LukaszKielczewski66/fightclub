@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes";
-import adminUsersRouter from "@/routes/admin.users.routes";
+import adminUsersRouter from "./routes/admin.users.routes";
 
 export const createApp = () => {
   const app = express();

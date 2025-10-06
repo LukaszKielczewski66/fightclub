@@ -1,5 +1,5 @@
 import { Types, type FilterQuery } from "mongoose";
-import { User, type UserRole } from "@/models/User";
+import { User, type UserRole } from "../models/User"
 
 // TODO EXPORT THIS TO TYPES 
 export type ListUsersParams = {

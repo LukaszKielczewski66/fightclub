@@ -3,7 +3,6 @@ import { isAxiosError } from "axios";
 import bgImage from "@/assets/images/bob.png";
 import { Location, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/features/auth/useAuth";
-import { loginApi } from "@/services/api/auth";
 import type { User } from "@/features/auth/auth.types";
 import {
   Alert,
@@ -43,20 +42,15 @@ export default function Login() {
     setErr(null);
     setLoading(true);
     try {
-      const res = await loginApi(email.trim(), password);
-      login(res.accessToken, res.user);
+      const res = await login(email, password); // <-- teraz masz res.user.role
 
       const state = isFromState(location.state) ? location.state : undefined;
       const target = state?.from?.pathname ?? roleHome(res.user.role);
       navigate(target, { replace: true });
     } catch (error: unknown) {
-      if (isAxiosError(error)) {
-        setErr(error.response?.data?.message ?? "Błąd logowania");
-      } else if (error instanceof Error) {
-        setErr(error.message);
-      } else {
-        setErr("Nieznany błąd");
-      }
+      if (isAxiosError(error)) setErr(error.response?.data?.message ?? "Błąd logowania");
+      else if (error instanceof Error) setErr(error.message);
+      else setErr("Nieznany błąd");
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { getUsersListSvc, getUserByIdSvc } from "@/services/admin.users.service";
+import { getUsersListSvc, getUserByIdSvc } from "../services/admin.users.service"
 
 //  *********** GET /api/admin/users
 
