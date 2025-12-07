@@ -7,7 +7,7 @@ import {
 } from "mongoose";
 import bcrypt from "bcryptjs";
 
-export type UserRole = "admin" | "trainer" | "client";
+export type UserRole = "admin" | "trainer" | "user";
 
 export interface IUser {
   email: string;
@@ -15,6 +15,8 @@ export interface IUser {
   role: UserRole;
   passwordHash: string;
   active: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 export interface IUserMethods {
   comparePassword(plain: string): Promise<boolean>;
@@ -41,8 +43,8 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>(
     name: { type: String, required: true },
     role: {
       type: String,
-      enum: ["admin", "trainer", "client"],
-      default: "client",
+      enum: ["admin", "trainer", "user"],
+      default: "user",
       required: true,
     },
     passwordHash: { type: String, required: true },

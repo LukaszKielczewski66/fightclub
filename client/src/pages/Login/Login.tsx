@@ -42,7 +42,7 @@ export default function Login() {
     setErr(null);
     setLoading(true);
     try {
-      const res = await login(email, password); // <-- teraz masz res.user.role
+      const res = await login(email, password);
 
       const state = isFromState(location.state) ? location.state : undefined;
       const target = state?.from?.pathname ?? roleHome(res.user.role);

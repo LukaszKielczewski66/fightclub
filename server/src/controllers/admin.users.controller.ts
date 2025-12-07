@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import { getUsersListSvc, getUserByIdSvc } from "../services/admin.users.service"
+import { getUsersListSvc, getUserByIdSvc, createUser } from "../services/admin.users.service"
+import { CreateUserBody } from "@/utils/types";
 
 //  *********** GET /api/admin/users
-
 export async function getUsersListCtrl(req: Request, res: Response) {
   const {
     page = "1",
@@ -46,5 +46,35 @@ export async function getUserByIdCtrl(req: Request, res: Response) {
     const message = err?.message || "Failed to fetch user";
     const status = Number(err?.status || 500);
     return res.status(status).json({ message });
+  }
+}
+
+
+//  *********** POST /api/admin/users/
+export async function createUserCtrl(
+  req: Request<{}, any, CreateUserBody>,
+  res: Response
+) {
+  try {
+    const { email, name, password, role } = req.body;
+
+    if (!email || !name || !password) {
+      return res.status(400).json({ message: "Brakuje wymaganych pól" });
+    }
+
+    if (!["admin", "trainer", "user"].includes(role)) {
+      return res.status(400).json({ message: "Nieprawidłowa rola użytkownika" });
+    }
+
+    const user = await createUser({ email, name, password, role });
+
+    return res.status(201).json(user);
+  } catch (err: any) {
+    if (err?.code === 11000) {
+      return res.status(409).json({ message: "Użytkownik z takim e-mailem już istnieje" });
+    }
+
+    console.error("createUserCtrl error:", err);
+    return res.status(500).json({ message: "Błąd serwera" });
   }
 }

@@ -1,42 +1,8 @@
 import { Types, type FilterQuery } from "mongoose";
-import { User, type UserRole } from "../models/User"
+import { User, type UserRole } from "../models/User";
+import bcrypt from "bcryptjs";
+import { CreateUserBody, ListUserItem, ListUsersParams, ListUsersResult, UserDetails } from "@/utils/types";
 
-// TODO EXPORT THIS TO TYPES 
-export type ListUsersParams = {
-  page: number;
-  limit: number;
-  query?: string; 
-  role?: UserRole;
-  active?: boolean;
-  sort?: string;
-};
-
-export type ListUserItem = {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string; 
-};
-
-export type ListUsersResult = {
-  items: ListUserItem[];
-  total: number;
-  page: number;
-  limit: number;
-};
-
-export type UserDetails = {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
 
 export async function getUsersListSvc(params: ListUsersParams): Promise<ListUsersResult> {
   const { page, limit, query, role, active, sort = "createdAt:desc" } = params;
@@ -93,6 +59,7 @@ export async function getUsersListSvc(params: ListUsersParams): Promise<ListUser
 
   return { items, total, page, limit };
 }
+
 export async function getUserByIdSvc(id: string): Promise<UserDetails | null> {
   if (!id) throw withStatus(new Error("Missing id"), 400);
   if (!Types.ObjectId.isValid(id)) throw withStatus(new Error("Invalid id"), 400);
@@ -132,5 +99,26 @@ function withStatus<T extends Error>(err: T, status: number): T & { status: numb
 }
 
 function isUserRole(v: unknown): v is UserRole {
-  return v === "admin" || v === "trainer" || v === "client";
+  return v === "admin" || v === "trainer" || v === "user";
+}
+
+export async function createUser(input: CreateUserBody) {
+  const passwordHash = await bcrypt.hash(input.password, 10);
+
+  const user = await User.create({
+    email: input.email,
+    name: input.name,
+    role: input.role,
+    passwordHash,
+  });
+
+  return {
+    id: user._id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    active: user.active,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
 }
