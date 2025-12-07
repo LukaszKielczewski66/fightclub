@@ -1,5 +1,5 @@
 
-import { CreatedUser, CreateUserPayload } from '@/types/adminUsers';
+import type { AdminUsersListParams, AdminUsersListResponse, CreatedUser, CreateUserPayload } from '@/types/adminUsers';
 import { http } from './http'
 
 export async function createUserApi(
@@ -14,3 +14,28 @@ export async function createUserApi(
 
   return res.data;
 }
+
+
+export async function getUsersApi(
+  token: string,
+  params: AdminUsersListParams = {}
+): Promise<AdminUsersListResponse> {
+  const res = await http.get<AdminUsersListResponse>("/admin/users", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    params: {
+      page: params.page ?? 1,
+      limit: params.limit ?? 20,
+      query: params.query ?? undefined,
+      role: params.role ?? undefined,
+      active:
+        typeof params.active === "boolean" ? String(params.active) : undefined,
+      sort: params.sort ?? "createdAt:desc",
+    },
+  });
+
+  return res.data;
+}
+
+export { AdminUsersListParams, AdminUsersListResponse };

@@ -16,3 +16,29 @@ export interface CreatedUser {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminUsersListParams {
+  page?: number;
+  limit?: number;
+  query?: string;
+  role?: Role;
+  active?: boolean;
+  sort?: string;
+}
+
+export interface AdminUsersListResponse {
+  items: AdminUserListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}

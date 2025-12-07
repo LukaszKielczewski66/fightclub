@@ -8,14 +8,17 @@
   TableRow,
   Typography,
   useTheme,
+  CircularProgress,
+  Box,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { useUsers } from "@/features/admin/useUsers";
 
-const mockUsers = [
-  { id: 1, email: "jan.kowalski@example.com", role: "Uzytkownik" },
-  { id: 2, email: "anna.nowak@example.com", role: "Trener" },
-  { id: 3, email: "admin@example.com", role: "Admin" },
-];
+const roleLabel: Record<"admin" | "trainer" | "user", string> = {
+  admin: "Admin",
+  trainer: "Trener",
+  user: "Użytkownik",
+};
 
 export const UsersTable = () => {
   const theme = useTheme();
@@ -29,6 +32,10 @@ export const UsersTable = () => {
     ? alpha(theme.palette.primary.main, 0.08)
     : alpha(theme.palette.primary.main, 0.06);
 
+  const { data, isLoading, isError } = useUsers();
+
+  const users = data?.items ?? [];
+
   return (
     <Paper
       elevation={0}
@@ -41,64 +48,90 @@ export const UsersTable = () => {
       }}
     >
       <Typography component="h2" variant="h6" gutterBottom>
-        Lista uzytkownikow
+        Lista użytkowników
       </Typography>
 
-      <TableContainer
-        sx={{
-          width: "100%",
-          overflowX: { xs: "auto", md: "visible" },
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
-        <Table size="small" stickyHeader={false}>
-          <TableHead>
-            <TableRow
-              sx={{
-                backgroundColor: headBg,
-                "& th": {
-                  fontWeight: 600,
-                  color: theme.palette.text.secondary,
-                  borderBottomColor: theme.palette.divider,
-                  py: { xs: 1, md: 1.25 },
-                },
-              }}
-            >
-              <TableCell>Email</TableCell>
-              <TableCell>Rola</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {mockUsers.map((user) => (
+      {isLoading && (
+        <Box display="flex" justifyContent="center" py={3}>
+          <CircularProgress size={28} />
+        </Box>
+      )}
+
+      {isError && (
+        <Typography color="error" variant="body2">
+          Nie udało się pobrać użytkowników.
+        </Typography>
+      )}
+
+      {!isLoading && !isError && (
+        <TableContainer
+          sx={{
+            width: "100%",
+            overflowX: { xs: "auto", md: "visible" },
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          <Table size="small" stickyHeader={false}>
+            <TableHead>
               <TableRow
-                key={user.id}
-                hover
                 sx={{
-                  transition: "background-color 120ms ease",
-                  "&:hover": { backgroundColor: rowHover },
-                  "& td": {
-                    borderBottomColor: alpha(theme.palette.divider, 0.9),
-                    py: { xs: 0.75, md: 1.25 },
+                  backgroundColor: headBg,
+                  "& th": {
+                    fontWeight: 600,
+                    color: theme.palette.text.secondary,
+                    borderBottomColor: theme.palette.divider,
+                    py: { xs: 1, md: 1.25 },
                   },
                 }}
               >
-                <TableCell
+                <TableCell>Email</TableCell>
+                <TableCell>Imię i nazwisko</TableCell>
+                <TableCell>Rola</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow
+                  key={user.id}
+                  hover
                   sx={{
-                    maxWidth: { xs: 240, sm: "none" },
-                    overflowWrap: "anywhere",
-                    wordBreak: "break-word",
+                    transition: "background-color 120ms ease",
+                    "&:hover": { backgroundColor: rowHover },
+                    "& td": {
+                      borderBottomColor: alpha(theme.palette.divider, 0.9),
+                      py: { xs: 0.75, md: 1.25 },
+                    },
                   }}
                 >
-                  {user.email}
-                </TableCell>
-                <TableCell sx={{ whiteSpace: { xs: "nowrap", sm: "normal" } }}>
-                  {user.role}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  <TableCell
+                    sx={{
+                      maxWidth: { xs: 240, sm: "none" },
+                      overflowWrap: "anywhere",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {user.email}
+                  </TableCell>
+                  <TableCell>{user.name}</TableCell>
+                  <TableCell sx={{ whiteSpace: { xs: "nowrap", sm: "normal" } }}>
+                    {roleLabel[user.role]}
+                  </TableCell>
+                </TableRow>
+              ))}
+
+              {users.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3}>
+                    <Typography variant="body2" color="text.secondary">
+                      Brak użytkowników do wyświetlenia.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </Paper>
   );
 };
