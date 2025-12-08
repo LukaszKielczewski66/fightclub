@@ -1,7 +1,7 @@
 import { Types, type FilterQuery } from "mongoose";
 import { User, type UserRole } from "../models/User";
 import bcrypt from "bcryptjs";
-import { CreateUserBody, ListUserItem, ListUsersParams, ListUsersResult, UserDetails } from "@/utils/types";
+import { CreateUserBody, ListUserItem, ListUsersParams, ListUsersResult, UpdateUserParams, UserDetails } from "@/utils/types";
 
 
 export async function getUsersListSvc(params: ListUsersParams): Promise<ListUsersResult> {
@@ -121,4 +121,49 @@ export async function createUser(input: CreateUserBody) {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
+}
+
+
+export async function updateUserSvc(params: UpdateUserParams): Promise<ListUserItem> {
+  const { id, name, role, active } = params;
+
+  if (!Types.ObjectId.isValid(id)) {
+    const err = new Error("Invalid user id") as any;
+    err.status = 400;
+    throw err;
+  }
+
+  const update: Partial<{ name: string; role: UserRole; active: boolean }> = {};
+
+  if (typeof name === "string" && name.trim()) update.name = name.trim();
+  if (typeof active === "boolean") update.active = active;
+  if (role && ["admin","trainer","user"].includes(role)) update.role = role;
+
+  const projection = "email name role active createdAt updatedAt";
+
+  const user = await User.findByIdAndUpdate(
+    id,
+    { $set: update },
+    { new: true }
+  )
+    .select(projection)
+    .lean();
+
+  if (!user) {
+    const err = new Error("User not found") as any;
+    err.status = 404;
+    throw err;
+  }
+
+  const result: ListUserItem = {
+    id: user._id.toString(),
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    active: user.active,
+    createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
+    updatedAt: user.updatedAt?.toISOString() ?? new Date().toISOString(),
+  };
+
+  return result;
 }

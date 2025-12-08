@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { getUsersListSvc, getUserByIdSvc, createUser } from "../services/admin.users.service"
-import { CreateUserBody } from "@/utils/types";
+import { getUsersListSvc, getUserByIdSvc, createUser, updateUserSvc } from "../services/admin.users.service"
+import { CreateUserBody, ListUserItem, UpdateUserBody } from "@/utils/types";
 
 //  *********** GET /api/admin/users
 export async function getUsersListCtrl(req: Request, res: Response) {
@@ -76,5 +76,28 @@ export async function createUserCtrl(
 
     console.error("createUserCtrl error:", err);
     return res.status(500).json({ message: "Błąd serwera" });
+  }
+}
+
+type UpdateUserParams = {
+  id: string;
+};
+
+//  *********** PATCH /api/admin/users/:id
+export async function updateUserCtrl(
+  req: Request<UpdateUserParams, any, UpdateUserBody>,
+  res: Response
+) {
+  try {
+    const { id } = req.params;
+    const { name, role, active } = req.body;
+
+    const user = await updateUserSvc({ id, name, role, active });
+
+    return res.json(user);
+  } catch (err: any) {
+    const message = err?.message || "Failed to update user";
+    const status = Number(err?.status || 500);
+    return res.status(status).json({ message });
   }
 }

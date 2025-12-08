@@ -43,10 +43,24 @@ type UserDetails = {
   updatedAt: string;
 };
 
+export interface UpdateUserParams {
+  id: string;
+  name?: string;
+  role?: UserRole;
+  active?: boolean;
+}
+
+type UpdateUserBody = {
+  name?: string;
+  role?: UserRole;
+  active?: boolean;
+};
+
 export {
     CreateUserBody,
     ListUsersParams,
     ListUserItem,
     ListUsersResult,
     UserDetails,
+    UpdateUserBody
 }

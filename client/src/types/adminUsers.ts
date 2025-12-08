@@ -42,3 +42,9 @@ export interface AdminUsersListResponse {
   page: number;
   limit: number;
 }
+
+export interface UpdateUserPayload {
+  name?: string;
+  role?: Role;
+  active?: boolean;
+}

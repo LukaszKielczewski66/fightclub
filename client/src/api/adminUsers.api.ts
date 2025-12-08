@@ -1,5 +1,5 @@
 
-import type { AdminUsersListParams, AdminUsersListResponse, CreatedUser, CreateUserPayload } from '@/types/adminUsers';
+import type { AdminUserListItem, AdminUsersListParams, AdminUsersListResponse, CreatedUser, CreateUserPayload, UpdateUserPayload } from '@/types/adminUsers';
 import { http } from './http'
 
 export async function createUserApi(
@@ -34,6 +34,24 @@ export async function getUsersApi(
       sort: params.sort ?? "createdAt:desc",
     },
   });
+
+  return res.data;
+}
+
+export async function updateUserApi(
+  id: string,
+  payload: UpdateUserPayload,
+  token: string
+): Promise<AdminUserListItem> {
+  const res = await http.patch<AdminUserListItem>(
+    `/admin/users/${id}`,
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   return res.data;
 }
