@@ -4,7 +4,7 @@ import { verifyAccessToken } from "../utils/auth";
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: string; role: "admin" | "trainer" | "client"; email: string };
+      user?: { id: string; role: "admin" | "trainer" | "user"; email: string };
     }
   }
 }
@@ -23,7 +23,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export function requireRole(...roles: Array<"admin" | "trainer" | "client">) {
+export function requireRole(...roles: Array<"admin" | "trainer" | "user">) {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) return res.status(401).json({ message: "Unauthorized" });
     if (!roles.includes(req.user.role)) return res.status(403).json({ message: "Forbidden" });

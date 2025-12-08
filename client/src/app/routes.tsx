@@ -20,7 +20,7 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
-          { path: "app", element: <RoleGate roles={["client","trainer","admin"]}><ClientPage/></RoleGate> },
+          { path: "app", element: <RoleGate roles={["user","trainer","admin"]}><ClientPage/></RoleGate> },
           { path: "trainer", element: <RoleGate roles={["trainer","admin"]}><TrainerPage/></RoleGate> },
           { path: "admin", element: <RoleGate roles={["admin"]}><AdminPage/></RoleGate> },
         ]

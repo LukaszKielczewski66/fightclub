@@ -2,7 +2,7 @@ import { api } from "./client";
 
 export type LoginResponse = {
   accessToken: string;
-  user: { id: string; email: string; name: string; role: "admin"|"trainer"|"client" };
+  user: { id: string; email: string; name: string; role: "admin"|"trainer"|"user" };
 };
 
 export async function loginApi(email: string, password: string): Promise<LoginResponse> {

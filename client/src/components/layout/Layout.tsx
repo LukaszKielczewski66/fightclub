@@ -32,7 +32,7 @@ import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { useThemeMode } from "@/features/theme/useThemeMode";
 
 
-type Role = "admin" | "trainer" | "client";
+type Role = "admin" | "trainer" | "user";
 
 type NavItem = {
   label: string;
@@ -43,7 +43,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", to: "/", icon: <HomeIcon />, roles: ["*"] },
-  { label: "Aplikacja", to: "/app", icon: <DashboardIcon />, roles: ["admin", "trainer", "client"] },
+  { label: "Aplikacja", to: "/app", icon: <DashboardIcon />, roles: ["admin", "trainer", "user"] },
   { label: "Trener", to: "/trainer", icon: <SportsKabaddiIcon />, roles: ["admin", "trainer"] },
   { label: "Admin", to: "/admin", icon: <AdminPanelSettingsIcon />, roles: ["admin"] },
 ];

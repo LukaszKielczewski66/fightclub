@@ -75,7 +75,7 @@ export const UserEditDialog = ({
           >
             <MenuItem value="admin">Admin</MenuItem>
             <MenuItem value="trainer">Trener</MenuItem>
-            <MenuItem value="client">Użytkownik</MenuItem>
+            <MenuItem value="user">Użytkownik</MenuItem>
           </Select>
         </FormControl>
 

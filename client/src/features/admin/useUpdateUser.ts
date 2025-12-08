@@ -18,7 +18,6 @@ export function useUpdateUser() {
       return await updateUserApi(id, data, token);
     },
     onSuccess: () => {
-      // odśwież listę użytkowników
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });

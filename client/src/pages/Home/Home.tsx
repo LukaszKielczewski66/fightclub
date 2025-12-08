@@ -14,7 +14,7 @@ export default function Home() {
       return <HomeAdmin />;
     case "trainer":
       return <HomeTrainer />;
-    case "client":
+    case "user":
       return <HomeClient />;
     default:
       return <HomePublic />;

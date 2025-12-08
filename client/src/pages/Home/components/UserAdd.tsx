@@ -67,7 +67,7 @@ export default function UserAdd() {
     setEmail("");
     setName("");
     setPassword("");
-    setRole("client");
+    setRole("user");
   } catch (error: unknown) {
 
     if (isAxiosError(error)) {
