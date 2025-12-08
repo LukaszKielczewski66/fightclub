@@ -24,7 +24,7 @@ function isFromState(v: unknown): v is FromState {
 function roleHome(role: User["role"]) {
   if (role === "admin") return "/admin";
   if (role === "trainer") return "/trainer";
-  return "/app";
+  return "/";
 }
 
 export default function Login() {

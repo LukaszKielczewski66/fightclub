@@ -30,6 +30,10 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import { useThemeMode } from "@/features/theme/useThemeMode";
+import EventNoteIcon from "@mui/icons-material/EventNote";
+import HistoryIcon from "@mui/icons-material/History";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+
 
 
 type Role = "admin" | "trainer" | "user";
@@ -43,7 +47,30 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", to: "/", icon: <HomeIcon />, roles: ["*"] },
-  { label: "Aplikacja", to: "/app", icon: <DashboardIcon />, roles: ["admin", "trainer", "user"] },
+  { 
+    label: "Grafik", 
+    to: "/schedule", 
+    icon: <CalendarMonthIcon />, 
+    roles: ["user"] 
+  },
+  {
+    label: "Moje zapisy",
+    to: "/bookings",
+    icon: <EventNoteIcon />,
+    roles: ["user"],
+  },
+  {
+    label: "Historia",
+    to: "/history",
+    icon: <HistoryIcon />,
+    roles: ["user"],
+  },
+  {
+    label: "Aplikacja",
+    to: "/app",
+    icon: <DashboardIcon />,
+    roles: ["admin", "trainer"],
+  },
   { label: "Trener", to: "/trainer", icon: <SportsKabaddiIcon />, roles: ["admin", "trainer"] },
   { label: "Admin", to: "/admin", icon: <AdminPanelSettingsIcon />, roles: ["admin"] },
 ];
