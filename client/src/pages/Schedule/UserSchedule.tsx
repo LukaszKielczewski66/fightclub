@@ -6,157 +6,55 @@ import {
   IconButton,
   Chip,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PeopleIcon from "@mui/icons-material/People";
+import { useMemo, useState } from "react";
+import { useScheduleSessions } from "@/features/schedule/useScheduleSessions";
+import type { Level } from "@/api/schedule.api";
+import { useAuth } from "@/features/auth/useAuth";
 
-type Level = "beginner" | "intermediate" | "advanced";
 type SessionStatus = "booked" | "full" | "available";
 
-type MockSession = {
-  id: string;
-  name: string;
-  type: "BJJ" | "MMA" | "Cross";
-  trainer: string;
-  day: number;
-  startHour: number;
-  endHour: number;
-  level: Level;
-  capacity: number;
-  reserved: number;
-  status: SessionStatus;
-};
-
-const DAYS = ["Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Nd"];
 const HOURS = [16, 17, 18, 19, 20, 21];
 
-const MOCK_SESSIONS: MockSession[] = [
-  {
-    id: "1",
-    name: "BJJ Beginners",
-    type: "BJJ",
-    trainer: "Jan Kowalski",
-    day: 0,
-    startHour: 18,
-    endHour: 19,
-    level: "beginner",
-    capacity: 20,
-    reserved: 18,
-    status: "booked",
-  },
-  {
-    id: "2",
-    name: "MMA All Levels",
-    type: "MMA",
-    trainer: "Anna Nowak",
-    day: 1,
-    startHour: 19,
-    endHour: 20,
-    level: "intermediate",
-    capacity: 15,
-    reserved: 15,
-    status: "full",
-  },
-  {
-    id: "3",
-    name: "Cross Training",
-    type: "Cross",
-    trainer: "Piotr Zieliński",
-    day: 2,
-    startHour: 18,
-    endHour: 19,
-    level: "beginner",
-    capacity: 12,
-    reserved: 7,
-    status: "available",
-  },
-  {
-    id: "4",
-    name: "BJJ Advanced",
-    type: "BJJ",
-    trainer: "Michał Krawczyk",
-    day: 4,
-    startHour: 20,
-    endHour: 21,
-    level: "advanced",
-    capacity: 10,
-    reserved: 9,
-    status: "available",
-  },
-  {
-    id: "5",
-    name: "MMA Sparring",
-    type: "MMA",
-    trainer: "Anna Nowak",
-    day: 3,
-    startHour: 19,
-    endHour: 21,
-    level: "advanced",
-    capacity: 16,
-    reserved: 16,
-    status: "full",
-  },
-  {
-    id: "6",
-    name: "Weekend BJJ",
-    type: "BJJ",
-    trainer: "Jan Kowalski",
-    day: 5,
-    startHour: 17,
-    endHour: 18,
-    level: "beginner",
-    capacity: 18,
-    reserved: 10,
-    status: "available",
-  },
-  {
-    id: "7",
-    name: "Niedzielne MMA",
-    type: "MMA",
-    trainer: "Anna Nowak",
-    day: 6,
-    startHour: 18,
-    endHour: 19,
-    level: "intermediate",
-    capacity: 14,
-    reserved: 12,
-    status: "booked",
-  },
-];
-
-function getSessionsForSlot(dayIndex: number, hour: number) {
-  return MOCK_SESSIONS.filter(
-    (s) => s.day === dayIndex && s.startHour === hour
-  );
+function startOfWeekMonday(date: Date) {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
-function dayHasAnySessions(dayIndex: number) {
-  return MOCK_SESSIONS.some((s) => s.day === dayIndex);
+function addDays(date: Date, days: number) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+function fmtDayShort(date: Date) {
+  const dow = new Intl.DateTimeFormat("pl-PL", { weekday: "short" }).format(date);
+  const ddmm = new Intl.DateTimeFormat("pl-PL", { day: "2-digit", month: "2-digit" }).format(date);
+  return `${dow.charAt(0).toUpperCase()}${dow.slice(1)} ${ddmm}`;
+}
+
+function fmtRange(from: Date, toExclusive: Date) {
+  const a = new Intl.DateTimeFormat("pl-PL", { day: "2-digit", month: "2-digit" }).format(from);
+  const b = new Intl.DateTimeFormat("pl-PL", { day: "2-digit", month: "2-digit" }).format(addDays(toExclusive, -1));
+  return `${a} – ${b}`;
 }
 
 function statusChip(status: SessionStatus) {
   switch (status) {
     case "booked":
-      return (
-        <Chip
-          size="small"
-          label="Zapisany"
-          color="success"
-          sx={{ height: 22, fontSize: 12 }}
-        />
-      );
+      return <Chip size="small" label="Zapisany" color="success" sx={{ height: 22, fontSize: 12 }} />;
     case "full":
-      return (
-        <Chip
-          size="small"
-          label="Brak miejsc"
-          color="error"
-          sx={{ height: 22, fontSize: 12 }}
-        />
-      );
+      return <Chip size="small" label="Brak miejsc" color="error" sx={{ height: 22, fontSize: 12 }} />;
     case "available":
     default:
       return (
@@ -187,12 +85,61 @@ function levelLabel(level: Level) {
 export const UserSchedule = () => {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
+  const { user } = useAuth();
+
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const weekStart = useMemo(() => {
+    const base = startOfWeekMonday(new Date());
+    return addDays(base, weekOffset * 7);
+  }, [weekOffset]);
+
+  const weekEndExclusive = useMemo(() => addDays(weekStart, 7), [weekStart]);
+
+  const fromIso = useMemo(() => weekStart.toISOString(), [weekStart]);
+  const toIso = useMemo(() => weekEndExclusive.toISOString(), [weekEndExclusive]);
+
+  const { data, isLoading, isError } = useScheduleSessions(fromIso, toIso);
+  const sessions = data?.items ?? [];
+
+  const days = useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i)), [weekStart]);
+
+  function getSessionsForSlot(dayIndex: number, hour: number) {
+    const day = days[dayIndex];
+    return sessions.filter((s) => {
+      const start = new Date(s.startAt);
+      return (
+        start.getFullYear() === day.getFullYear() &&
+        start.getMonth() === day.getMonth() &&
+        start.getDate() === day.getDate() &&
+        start.getHours() === hour
+      );
+    });
+  }
+
+  function dayHasAnySessions(dayIndex: number) {
+    const day = days[dayIndex];
+    return sessions.some((s) => {
+      const start = new Date(s.startAt);
+      return (
+        start.getFullYear() === day.getFullYear() &&
+        start.getMonth() === day.getMonth() &&
+        start.getDate() === day.getDate()
+      );
+    });
+  }
+
+  function getStatusForSession(s: (typeof sessions)[number]): SessionStatus {
+    const isBooked = !!user && Array.isArray(s.participantsIds) && s.participantsIds.includes(user.id);
+
+    if (isBooked) return "booked";
+    if (s.reserved >= s.capacity) return "full";
+    return "available";
+  }
 
   const cardBg = isDark ? theme.palette.background.paper : theme.palette.grey[100];
   const gridBorder = alpha(theme.palette.divider, 0.9);
-  const headerBg = isDark
-    ? alpha(theme.palette.common.white, 0.04)
-    : alpha(theme.palette.grey[900], 0.02);
+  const headerBg = isDark ? alpha(theme.palette.common.white, 0.04) : alpha(theme.palette.grey[900], 0.02);
 
   return (
     <Paper
@@ -208,28 +155,24 @@ export const UserSchedule = () => {
         <Box>
           <Typography variant="h6">Grafik zajęć</Typography>
           <Typography variant="body2" color="text.secondary">
-            Podgląd tygodnia – widoczne są tylko zajęcia dostępne dla użytkowników.
+            Tydzień: {fmtRange(weekStart, weekEndExclusive)}
           </Typography>
         </Box>
+
         <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton size="small">
+          <IconButton size="small" onClick={() => setWeekOffset((v) => v - 1)}>
             <ChevronLeftIcon fontSize="small" />
           </IconButton>
           <Typography variant="body2" color="text.secondary">
-            Bieżący tydzień
+            {weekOffset === 0 ? "Bieżący tydzień" : `${weekOffset > 0 ? "+" : ""}${weekOffset} tydz.`}
           </Typography>
-          <IconButton size="small">
+          <IconButton size="small" onClick={() => setWeekOffset((v) => v + 1)}>
             <ChevronRightIcon fontSize="small" />
           </IconButton>
         </Box>
       </Box>
 
-      <Stack
-        direction="row"
-        spacing={1.5}
-        alignItems="center"
-        sx={{ mb: 2, flexWrap: "wrap" }}
-      >
+      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2, flexWrap: "wrap" }}>
         <Typography variant="body2" color="text.secondary">
           Status:
         </Typography>
@@ -238,191 +181,175 @@ export const UserSchedule = () => {
         {statusChip("full")}
       </Stack>
 
-      <Box
-        sx={{
-          width: "100%",
-          overflowX: "auto",
-          overflowY: "hidden",
-          pb: 1,
-        }}
-      >
-        <Box
-          sx={{
-            minWidth: 2000,
-            display: "grid",
-            gridTemplateColumns: `72px repeat(${DAYS.length}, 1fr)`,
-            gridAutoRows: "minmax(56px, auto)",
-            border: `1px solid ${gridBorder}`,
-            borderRadius: 2,
-            overflow: "hidden",
-          }}
-        >
+      {isLoading && (
+        <Box display="flex" justifyContent="center" py={3}>
+          <CircularProgress size={28} />
+        </Box>
+      )}
+
+      {isError && (
+        <Typography color="error" variant="body2">
+          Nie udało się pobrać grafiku z backendu.
+        </Typography>
+      )}
+
+      {!isLoading && !isError && (
+        <Box sx={{ width: "100%", overflowX: "auto", overflowY: "hidden", pb: 1 }}>
           <Box
             sx={{
-              backgroundColor: headerBg,
-              borderBottom: `1px solid ${gridBorder}`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 12,
-              fontWeight: 600,
+              minWidth: 2000,
+              display: "grid",
+              gridTemplateColumns: `72px repeat(7, 1fr)`,
+              gridAutoRows: "minmax(56px, auto)",
+              border: `1px solid ${gridBorder}`,
+              borderRadius: 2,
+              overflow: "hidden",
             }}
           >
-            <Typography variant="caption" color="text.secondary">
-              Godzina
-            </Typography>
-          </Box>
-
-          {DAYS.map((day) => (
+            {/* Header: godzina */}
             <Box
-              key={day}
               sx={{
                 backgroundColor: headerBg,
                 borderBottom: `1px solid ${gridBorder}`,
-                borderLeft: `1px solid ${gridBorder}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 600,
               }}
             >
-              {day}
+              <Typography variant="caption" color="text.secondary">
+                Godzina
+              </Typography>
             </Box>
-          ))}
 
-          {HOURS.map((hour) => (
-            <Box key={hour} sx={{ display: "contents" }}>
+            {/* Header: dni tygodnia (z datą) */}
+            {days.map((d) => (
               <Box
+                key={d.toISOString()}
                 sx={{
-                  borderTop: `1px solid ${gridBorder}`,
+                  backgroundColor: headerBg,
+                  borderBottom: `1px solid ${gridBorder}`,
+                  borderLeft: `1px solid ${gridBorder}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 12,
-                  color: "text.secondary",
-                  px: 0.5,
+                  fontSize: 13,
+                  fontWeight: 600,
                 }}
               >
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                  <AccessTimeIcon sx={{ fontSize: 14 }} />
-                  <span>{hour}:00</span>
-                </Stack>
+                {fmtDayShort(d)}
               </Box>
+            ))}
 
-              {DAYS.map((_, dayIndex) => {
-                const sessions = getSessionsForSlot(dayIndex, hour);
-                const hasAnySessionsThatDay = dayHasAnySessions(dayIndex);
+            {/* Grid */}
+            {HOURS.map((hour) => (
+              <Box key={hour} sx={{ display: "contents" }}>
+                <Box
+                  sx={{
+                    borderTop: `1px solid ${gridBorder}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 12,
+                    color: "text.secondary",
+                    px: 0.5,
+                  }}
+                >
+                  <Stack direction="row" spacing={0.5} alignItems="center">
+                    <AccessTimeIcon sx={{ fontSize: 14 }} />
+                    <span>{hour}:00</span>
+                  </Stack>
+                </Box>
 
-                return (
-                  <Box
-                    key={`${dayIndex}-${hour}`}
-                    sx={{
-                      borderTop: `1px solid ${gridBorder}`,
-                      borderLeft: `1px solid ${gridBorder}`,
-                      p: 0.5,
-                      minHeight: 56,
-                    }}
-                  >
-                    <Stack spacing={0.5}>
-                      {sessions.map((s) => {
-                        const free = s.capacity - s.reserved;
-                        return (
-                          <Paper
-                            key={s.id}
-                            elevation={0}
-                            sx={{
-                              p: 0.75,
-                              borderRadius: 1.5,
-                              backgroundColor: alpha(
-                                s.status === "booked"
-                                  ? theme.palette.success.main
-                                  : s.status === "full"
-                                  ? theme.palette.error.main
-                                  : theme.palette.primary.main,
-                                isDark ? 0.18 : 0.1
-                              ),
-                              border: `1px solid ${alpha(
-                                s.status === "booked"
-                                  ? theme.palette.success.main
-                                  : s.status === "full"
-                                  ? theme.palette.error.main
-                                  : theme.palette.primary.main,
-                                0.6
-                              )}`,
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{ fontWeight: 600, lineHeight: 1.3 }}
+                {days.map((_, dayIndex) => {
+                  const slotSessions = getSessionsForSlot(dayIndex, hour);
+                  const hasAny = dayHasAnySessions(dayIndex);
+
+                  return (
+                    <Box
+                      key={`${dayIndex}-${hour}`}
+                      sx={{
+                        borderTop: `1px solid ${gridBorder}`,
+                        borderLeft: `1px solid ${gridBorder}`,
+                        p: 0.5,
+                        minHeight: 56,
+                      }}
+                    >
+                      <Stack spacing={0.5}>
+                        {slotSessions.map((s) => {
+                          const reserved = s.reserved;
+                          const free = Math.max(0, s.capacity - reserved);
+                          const status = getStatusForSession(s);
+
+                          return (
+                            <Paper
+                              key={s.id}
+                              elevation={0}
+                              sx={{
+                                p: 0.75,
+                                borderRadius: 1.5,
+                                backgroundColor: alpha(
+                                  status === "booked"
+                                    ? theme.palette.success.main
+                                    : status === "full"
+                                    ? theme.palette.error.main
+                                    : theme.palette.primary.main,
+                                  isDark ? 0.18 : 0.1
+                                ),
+                                border: `1px solid ${alpha(
+                                  status === "booked"
+                                    ? theme.palette.success.main
+                                    : status === "full"
+                                    ? theme.palette.error.main
+                                    : theme.palette.primary.main,
+                                  0.6
+                                )}`,
+                              }}
                             >
-                              {s.name}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: "block" }}
-                            >
-                              {s.type} • {s.trainer}
-                            </Typography>
-                            <Stack
-                              direction="row"
-                              justifyContent="space-between"
-                              alignItems="center"
-                              sx={{ mt: 0.25 }}
-                            >
-                              <Stack
-                                direction="row"
-                                spacing={0.75}
-                                alignItems="center"
-                              >
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {levelLabel(s.level)}
-                                </Typography>
-                                <Stack
-                                  direction="row"
-                                  spacing={0.5}
-                                  alignItems="center"
-                                >
-                                  <PeopleIcon
-                                    sx={{ fontSize: 14, opacity: 0.7 }}
-                                  />
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    {s.reserved}/{s.capacity}
-                                    {free > 0 && ` (${free} wolne)`}
+                              <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+                                {s.name}
+                              </Typography>
+
+                              <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                                {s.type} • {s.trainerName}
+                              </Typography>
+
+                              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 0.25 }}>
+                                <Stack direction="row" spacing={0.75} alignItems="center">
+                                  <Typography variant="caption" color="text.secondary">
+                                    {levelLabel(s.level)}
                                   </Typography>
+
+                                  <Stack direction="row" spacing={0.5} alignItems="center">
+                                    <PeopleIcon sx={{ fontSize: 14, opacity: 0.7 }} />
+                                    <Typography variant="caption" color="text.secondary">
+                                      {reserved}/{s.capacity}
+                                      {free > 0 && ` (${free} wolne)`}
+                                    </Typography>
+                                  </Stack>
                                 </Stack>
+
+                                {statusChip(status)}
                               </Stack>
+                            </Paper>
+                          );
+                        })}
 
-                              {statusChip(s.status)}
-                            </Stack>
-                          </Paper>
-                        );
-                      })}
-
-                      {hour === HOURS[0] && !hasAnySessionsThatDay && (
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ opacity: 0.7 }}
-                        >
-                          Brak zajęć tego dnia
-                        </Typography>
-                      )}
-                    </Stack>
-                  </Box>
-                );
-              })}
-            </Box>
-          ))}
+                        {hour === HOURS[0] && !hasAny && (
+                          <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.7 }}>
+                            Brak zajęć tego dnia
+                          </Typography>
+                        )}
+                      </Stack>
+                    </Box>
+                  );
+                })}
+              </Box>
+            ))}
+          </Box>
         </Box>
-      </Box>
+      )}
     </Paper>
   );
 };

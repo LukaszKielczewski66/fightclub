@@ -3,6 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes";
 import adminUsersRouter from "./routes/admin.users.routes";
+import scheduleRouter from "./routes/schedule.routes";
 
 export const createApp = () => {
   const app = express();
@@ -16,6 +17,9 @@ export const createApp = () => {
 
   // ADMIN 
   app.use("/api/admin/users", adminUsersRouter);
+  
+  // SCHEDULE
+  app.use("/api/schedule", scheduleRouter);
 
   app.use((_req, res) => res.status(404).json({ message: "Not Found" }));
   return app;
