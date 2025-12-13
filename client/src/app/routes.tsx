@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Outlet } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import Home from "@/pages/Home/Home";
 import Login from "@/pages/Login/Login";
@@ -7,9 +7,16 @@ import ProtectedRoute from "@/features/auth/ProtectedRoute";
 import RoleGate from "@/features/auth/RoleGate";
 import Bookings from "@/pages/Bookings/Bookings";
 import { UserSchedule } from "@/pages/Schedule/UserSchedule";
+import TrainerProfile from "@/pages/Trainer/TrainerProfile";
+import TrainerCreateSessions from "@/pages/Trainer/TrainerCreateSessions";
+import TrainerMySessions from "@/pages/Trainer/TrainerMySessions";
+import TrainerAttendance from "@/pages/Trainer/TrainerAttendance";
+import TrainerParticipants from "@/pages/Trainer/TrainerParticipants";
+import TrainerReports from "@/pages/Trainer/TrainerReports";
+
+
 
 const AdminPage = () => <div>Panel admina</div>;
-const TrainerPage = () => <div>Kalendarz trenera</div>;
 const AppPage = () => <div>Panel aplikacji (trener/admin)</div>;
 const UserHistoryPage = () => <div>Historia aktywności</div>;
 
@@ -32,16 +39,22 @@ export const router = createBrowserRouter([
               </RoleGate>
             ),
           },
-
           {
             path: "trainer",
             element: (
               <RoleGate roles={["trainer", "admin"]}>
-                <TrainerPage />
+                <Outlet />
               </RoleGate>
             ),
+            children: [
+              { index: true, element: <TrainerProfile /> },
+              { path: "schedule", element: <TrainerCreateSessions /> },
+              { path: "my-sessions", element: <TrainerMySessions /> },
+              { path: "attendance", element: <TrainerAttendance /> },
+              { path: "participants", element: <TrainerParticipants /> },
+              { path: "reports", element: <TrainerReports /> },
+            ],
           },
-
           {
             path: "admin",
             element: (

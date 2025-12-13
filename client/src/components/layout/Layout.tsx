@@ -23,7 +23,6 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import HomeIcon from "@mui/icons-material/Home";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import SportsKabaddiIcon from "@mui/icons-material/SportsKabaddi";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -33,8 +32,10 @@ import { useThemeMode } from "@/features/theme/useThemeMode";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import HistoryIcon from "@mui/icons-material/History";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-
-
+import PersonIcon from "@mui/icons-material/Person";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import GroupsIcon from "@mui/icons-material/Groups";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 
 type Role = "admin" | "trainer" | "user";
 
@@ -46,12 +47,12 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Home", to: "/", icon: <HomeIcon />, roles: ["*"] },
-  { 
-    label: "Grafik", 
-    to: "/schedule", 
-    icon: <CalendarMonthIcon />, 
-    roles: ["user"] 
+  { label: "Home", to: "/", icon: <HomeIcon />, roles: ["user", "admin"] },
+  {
+    label: "Grafik",
+    to: "/schedule",
+    icon: <CalendarMonthIcon />,
+    roles: ["user"],
   },
   {
     label: "Moje zapisy",
@@ -69,16 +70,44 @@ const NAV_ITEMS: NavItem[] = [
     label: "Aplikacja",
     to: "/app",
     icon: <DashboardIcon />,
+    roles: ["admin"],
+  },
+  { label: "Profil trenera", to: "/trainer", icon: <PersonIcon />, roles: ["admin", "trainer"] },
+  {
+    label: "Dodaj zajęcia",
+    to: "/trainer/schedule",
+    icon: <CalendarMonthIcon />,
     roles: ["admin", "trainer"],
   },
-  { label: "Trener", to: "/trainer", icon: <SportsKabaddiIcon />, roles: ["admin", "trainer"] },
+  {
+    label: "Moje zajęcia",
+    to: "/trainer/my-sessions",
+    icon: <EventNoteIcon />,
+    roles: ["admin", "trainer"],
+  },
+  {
+    label: "Obecności",
+    to: "/trainer/attendance",
+    icon: <FactCheckIcon />,
+    roles: ["admin", "trainer"],
+  },
+  {
+    label: "Uczestnicy",
+    to: "/trainer/participants",
+    icon: <GroupsIcon />,
+    roles: ["admin", "trainer"],
+  },
+  {
+    label: "Raporty",
+    to: "/trainer/reports",
+    icon: <AssessmentIcon />,
+    roles: ["admin", "trainer"],
+  },
   { label: "Admin", to: "/admin", icon: <AdminPanelSettingsIcon />, roles: ["admin"] },
 ];
 
 function VisibleItems(userRole: Role | null) {
-  return NAV_ITEMS.filter((i) =>
-    i.roles.includes("*") || (userRole && i.roles.includes(userRole))
-  );
+  return NAV_ITEMS.filter((i) => i.roles.includes("*") || (userRole && i.roles.includes(userRole)));
 }
 
 const activeSx = {
@@ -94,7 +123,6 @@ export default function Layout() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { mode, toggleMode } = useThemeMode();
-
 
   const role: Role | null = (user?.role as Role) ?? null;
   const items = useMemo(() => VisibleItems(role), [role]);
@@ -218,11 +246,7 @@ export default function Layout() {
           <Divider sx={{ my: 1 }} />
           {!user ? (
             <List>
-              <ListItemButton
-                component={NavLink}
-                to="/login"
-                onClick={() => setDrawerOpen(false)}
-              >
+              <ListItemButton component={NavLink} to="/login" onClick={() => setDrawerOpen(false)}>
                 <ListItemIcon>
                   <LoginIcon />
                 </ListItemIcon>
