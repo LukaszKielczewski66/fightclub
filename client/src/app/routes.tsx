@@ -5,20 +5,20 @@ import Home from "@/pages/Home/Home";
 import Login from "@/pages/Login/Login";
 import ProtectedRoute from "@/features/auth/ProtectedRoute";
 import RoleGate from "@/features/auth/RoleGate";
-import Bookings from "@/pages/Bookings/Bookings";
+import Bookings from "@/pages/Bookings/BookingsPage";
 import { UserSchedule } from "@/pages/Schedule/UserSchedule";
 import TrainerProfile from "@/pages/Trainer/TrainerProfile";
 import TrainerCreateSessions from "@/pages/Trainer/TrainerCreateSessions";
 import TrainerMySessions from "@/pages/Trainer/TrainerMySessions";
 import TrainerAttendance from "@/pages/Trainer/TrainerAttendance";
 import TrainerParticipants from "@/pages/Trainer/TrainerParticipants";
+import HistoryPage from "@/pages/History/HistoryPage";
 import TrainerReports from "@/pages/Trainer/TrainerReports";
 
 
 
 const AdminPage = () => <div>Panel admina</div>;
 const AppPage = () => <div>Panel aplikacji (trener/admin)</div>;
-const UserHistoryPage = () => <div>Historia aktywności</div>;
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -77,7 +77,7 @@ export const router = createBrowserRouter([
             path: "history",
             element: (
               <RoleGate roles={["user"]}>
-                <UserHistoryPage />
+                <HistoryPage />
               </RoleGate>
             ),
           },

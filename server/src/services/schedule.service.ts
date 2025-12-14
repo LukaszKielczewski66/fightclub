@@ -2,30 +2,15 @@ import mongoose from "mongoose";
 import { Session } from "../models/Session";
 import { User } from "../models/User";
 import { CreateSessionInput } from "@/utils/types";
+import { addDays, isIntInRange, parseDateOrNull, startOfWeekMonday } from "../utils/helpers";
 
-function parseDateOrNull(v: unknown) {
-  if (typeof v !== "string") return null;
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
 
-function startOfWeekMonday(date: Date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
+type HttpErr = Error & { status?: number };
 
-function addDays(date: Date, days: number) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function isIntInRange(v: unknown, min: number, max: number) {
-  return Number.isInteger(v) && typeof v === "number" && v >= min && v <= max;
+function httpError(message: string, status: number): HttpErr {
+  const err: HttpErr = new Error(message);
+  err.status = status;
+  return err;
 }
 
 export async function createScheduleSessionSvc(
@@ -129,5 +114,148 @@ export async function createScheduleSessionSvc(
     endAt: (created.endAt as Date).toISOString(),
     reserved: 0,
     participantsIds: [],
+  };
+}
+
+
+
+export async function bookSessionSvc(args: { sessionId: string; userId: string }) {
+  const { sessionId, userId } = args;
+
+  if (!mongoose.isValidObjectId(sessionId)) {
+    const err = new Error("Nieprawidłowe id zajęć");
+    (err as any).status = 400;
+    throw err;
+  }
+
+  const updated = await Session.findOneAndUpdate(
+    {
+      _id: sessionId,
+      participants: { $ne: userId },
+      $expr: { $lt: [{ $size: "$participants" }, "$capacity"] },
+    },
+    { $addToSet: { participants: userId } },
+    { new: true }
+  )
+    .select("name type level trainerId startAt endAt capacity participants")
+    .populate("trainerId", "name")
+    .lean();
+
+  if (!updated) {
+    const s = await Session.findById(sessionId).select("capacity participants").lean();
+
+    if (!s) {
+      const err = new Error("Zajęcia nie istnieją");
+      (err as any).status = 404;
+      throw err;
+    }
+
+    const already =
+      Array.isArray((s as any).participants) &&
+      (s as any).participants.some((p: any) => String(p) === userId);
+
+    if (already) {
+      const err = new Error("Jesteś już zapisany na te zajęcia");
+      (err as any).status = 409;
+      throw err;
+    }
+
+    const reserved = Array.isArray((s as any).participants) ? (s as any).participants.length : 0;
+    if (reserved >= (s as any).capacity) {
+      const err = new Error("Brak miejsc na te zajęcia");
+      (err as any).status = 409;
+      throw err;
+    }
+
+    const err = new Error("Nie można zapisać na zajęcia");
+    (err as any).status = 409;
+    throw err;
+  }
+
+  const u: any = updated;
+
+  return {
+    id: String(u._id),
+    name: u.name,
+    type: u.type,
+    level: u.level,
+    trainerName: u.trainerId?.name ?? "Trainer",
+    capacity: u.capacity,
+    startAt: new Date(u.startAt).toISOString(),
+    endAt: new Date(u.endAt).toISOString(),
+    reserved: Array.isArray(u.participants) ? u.participants.length : 0,
+    participantsIds: (u.participants ?? []).map((id: any) => String(id)),
+  };
+}
+
+export async function listMyBookingsSvc(args: { userId: string; from?: Date; to?: Date }) {
+  const { userId, from, to } = args;
+
+  const filter: any = {
+    participants: userId,
+    startAt: { $gte: from ?? new Date() },
+  };
+
+  if (to) {
+    filter.startAt = { ...(filter.startAt ?? {}), $lt: to };
+  }
+
+  const sessions = await Session.find(filter)
+    .sort({ startAt: 1 })
+    .select("name type level trainerId startAt endAt capacity participants")
+    .populate("trainerId", "name")
+    .lean();
+
+  const items = sessions.map((s: any) => ({
+    id: String(s._id),
+    name: s.name,
+    type: s.type,
+    level: s.level,
+    trainerName: s.trainerId?.name ?? "Trainer",
+    capacity: s.capacity,
+    startAt: new Date(s.startAt).toISOString(),
+    endAt: new Date(s.endAt).toISOString(),
+    reserved: Array.isArray(s.participants) ? s.participants.length : 0,
+    participantsIds: (s.participants ?? []).map((id: any) => String(id)),
+  }));
+
+  return { items };
+}
+
+export async function unbookSessionSvc(args: { sessionId: string; userId: string }) {
+  const { sessionId, userId } = args;
+
+  if (!mongoose.isValidObjectId(sessionId)) {
+    throw httpError("Nieprawidłowe id zajęć", 400);
+  }
+
+  const updated = await Session.findOneAndUpdate(
+    { _id: sessionId, participants: userId },
+    { $pull: { participants: userId } },
+    { new: true }
+  )
+    .select("name type level trainerId startAt endAt capacity participants")
+    .populate("trainerId", "name")
+    .lean();
+
+  if (!updated) {
+    const exists = await Session.findById(sessionId).select("_id").lean();
+    if (!exists) throw httpError("Zajęcia nie istnieją", 404);
+    throw httpError("Nie jesteś zapisany na te zajęcia", 409);
+  }
+
+  const u: any = updated;
+
+  return {
+    id: String(u._id),
+    name: u.name,
+    type: u.type,
+    level: u.level,
+    trainerName: u.trainerId?.name ?? "Trainer",
+    capacity: u.capacity,
+    startAt: new Date(u.startAt).toISOString(),
+    endAt: new Date(u.endAt).toISOString(),
+    reserved: Array.isArray(u.participants) ? u.participants.length : 0,
+    participantsIds: (u.participants ?? []).map((id: any) => String(id)),
   };
 }

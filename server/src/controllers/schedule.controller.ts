@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { Session } from "../models/Session";
 import { createScheduleSessionSvc } from "../services/schedule.service";
+import { bookSessionSvc } from "../services/schedule.service";
+import { listMyBookingsSvc, unbookSessionSvc } from "../services/schedule.service";
+
 
 function parseDateOrNull(v: unknown) {
   if (typeof v !== "string") return null;
@@ -92,4 +95,53 @@ export async function listMySessionsCtrl(req: Request, res: Response) {
 
   return res.json({ items });
 }
+
+
+export async function bookSessionCtrl(req: Request, res: Response) {
+  try {
+    const result = await bookSessionSvc({
+      sessionId: req.params.id,
+      userId: req.user!.id,
+    });
+    return res.json(result);
+  } catch (err: unknown) {
+    const e = err as { message?: string; status?: number };
+    return res.status(e.status ?? 400).json({ message: e.message ?? "Nie udało się zapisać" });
+  }
+}
+
+
+
+export async function listMyBookingsCtrl(req: Request, res: Response) {
+  try {
+    const from = parseDateOrNull(req.query.from);
+    const to = parseDateOrNull(req.query.to);
+
+    const result = await listMyBookingsSvc({
+      userId: req.user!.id,
+      from: from ?? undefined,
+      to: to ?? undefined,
+    });
+
+    return res.json(result);
+  } catch (err: unknown) {
+    const e = err as { message?: string; status?: number };
+    return res.status(e.status ?? 400).json({ message: e.message ?? "Nie udało się pobrać zapisów" });
+  }
+}
+
+export async function unbookSessionCtrl(req: Request, res: Response) {
+  try {
+    const result = await unbookSessionSvc({
+      sessionId: req.params.id,
+      userId: req.user!.id,
+    });
+    return res.json(result);
+  } catch (err: unknown) {
+    const e = err as { message?: string; status?: number };
+    return res.status(e.status ?? 400).json({ message: e.message ?? "Nie udało się wypisać" });
+  }
+}
+
+
 

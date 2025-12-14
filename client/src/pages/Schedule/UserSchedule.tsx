@@ -4,23 +4,29 @@ import {
   Typography,
   useTheme,
   IconButton,
-  Chip,
   Stack,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import PeopleIcon from "@mui/icons-material/People";
-import { useMemo, useState } from "react";
+import Tooltip from "@mui/material/Tooltip";
+import { useCallback, useMemo, useState } from "react";
+
 import { useScheduleSessions } from "@/features/schedule/useScheduleSessions";
-import type { Level } from "@/api/schedule.api";
+import type { Level, SessionDto } from "@/api/schedule.api";
 import { useAuth } from "@/features/auth/useAuth";
+import { useBookScheduleSession } from "@/features/schedule/useBookScheduleSession";
+import ConfirmBookingModal from "@/components/schedule/ConformBookingModal";
 
 type SessionStatus = "booked" | "full" | "available";
 
-const HOURS = [16, 17, 18, 19, 20, 21];
+const START_HOUR = 16;
+const END_HOUR = 22;
+const SLOT_MIN = 30;
 
 function startOfWeekMonday(date: Date) {
   const d = new Date(date);
@@ -49,26 +55,6 @@ function fmtRange(from: Date, toExclusive: Date) {
   return `${a} – ${b}`;
 }
 
-function statusChip(status: SessionStatus) {
-  switch (status) {
-    case "booked":
-      return <Chip size="small" label="Zapisany" color="success" sx={{ height: 22, fontSize: 12 }} />;
-    case "full":
-      return <Chip size="small" label="Brak miejsc" color="error" sx={{ height: 22, fontSize: 12 }} />;
-    case "available":
-    default:
-      return (
-        <Chip
-          size="small"
-          label="Możesz się zapisać"
-          color="primary"
-          variant="outlined"
-          sx={{ height: 22, fontSize: 12 }}
-        />
-      );
-  }
-}
-
 function levelLabel(level: Level) {
   switch (level) {
     case "beginner":
@@ -80,6 +66,32 @@ function levelLabel(level: Level) {
     default:
       return level;
   }
+}
+
+function minutesBetween(aIso: string, bIso: string) {
+  const a = new Date(aIso).getTime();
+  const b = new Date(bIso).getTime();
+  return Math.max(0, Math.round((b - a) / 60000));
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.min(Math.max(n, min), max);
+}
+
+function fmtDateTimeRange(startIso: string, endIso: string) {
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+
+  const day = new Intl.DateTimeFormat("pl-PL", {
+    weekday: "short",
+    day: "2-digit",
+    month: "2-digit",
+  }).format(start);
+
+  const t1 = new Intl.DateTimeFormat("pl-PL", { hour: "2-digit", minute: "2-digit" }).format(start);
+  const t2 = new Intl.DateTimeFormat("pl-PL", { hour: "2-digit", minute: "2-digit" }).format(end);
+
+  return `${day} • ${t1}–${t2}`;
 }
 
 export const UserSchedule = () => {
@@ -100,46 +112,118 @@ export const UserSchedule = () => {
   const toIso = useMemo(() => weekEndExclusive.toISOString(), [weekEndExclusive]);
 
   const { data, isLoading, isError } = useScheduleSessions(fromIso, toIso);
-  const sessions = data?.items ?? [];
 
   const days = useMemo(() => Array.from({ length: 7 }).map((_, i) => addDays(weekStart, i)), [weekStart]);
 
-  function getSessionsForSlot(dayIndex: number, hour: number) {
-    const day = days[dayIndex];
-    return sessions.filter((s) => {
-      const start = new Date(s.startAt);
-      return (
-        start.getFullYear() === day.getFullYear() &&
-        start.getMonth() === day.getMonth() &&
-        start.getDate() === day.getDate() &&
-        start.getHours() === hour
-      );
-    });
-  }
+  const slots = useMemo(() => {
+    const out: Array<{ hour: number; minute: number }> = [];
+    for (let h = START_HOUR; h < END_HOUR; h++) {
+      out.push({ hour: h, minute: 0 });
+      out.push({ hour: h, minute: 30 });
+    }
+    return out;
+  }, []);
 
-  function dayHasAnySessions(dayIndex: number) {
-    const day = days[dayIndex];
-    return sessions.some((s) => {
-      const start = new Date(s.startAt);
-      return (
-        start.getFullYear() === day.getFullYear() &&
-        start.getMonth() === day.getMonth() &&
-        start.getDate() === day.getDate()
-      );
-    });
-  }
+  const getStatusForSession = useCallback(
+    (s: SessionDto): SessionStatus => {
+      const isBooked =
+        !!user && Array.isArray(s.participantsIds) && s.participantsIds.includes(user.id);
 
-  function getStatusForSession(s: (typeof sessions)[number]): SessionStatus {
-    const isBooked = !!user && Array.isArray(s.participantsIds) && s.participantsIds.includes(user.id);
+      if (isBooked) return "booked";
+      if (s.reserved >= s.capacity) return "full";
+      return "available";
+    },
+    [user]
+  );
 
-    if (isBooked) return "booked";
-    if (s.reserved >= s.capacity) return "full";
-    return "available";
-  }
+  const blocks = useMemo(() => {
+    const sessions = data?.items ?? [];
+    return sessions
+      .map((s) => {
+        const start = new Date(s.startAt);
+        const end = new Date(s.endAt);
+
+        const dayIndex = Math.floor((start.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000));
+        if (dayIndex < 0 || dayIndex > 6) return null;
+
+        const startMinOfDay = start.getHours() * 60 + start.getMinutes();
+        const endMinOfDay = end.getHours() * 60 + end.getMinutes();
+
+        const gridStartMin = START_HOUR * 60;
+        const gridEndMin = END_HOUR * 60;
+
+        const clampedStart = clamp(startMinOfDay, gridStartMin, gridEndMin);
+        const clampedEnd = clamp(endMinOfDay, gridStartMin, gridEndMin);
+
+        const duration = Math.max(0, clampedEnd - clampedStart);
+        if (duration === 0) return null;
+
+        const rowStart = 2 + Math.floor((clampedStart - gridStartMin) / SLOT_MIN);
+        const rowSpan = Math.max(1, Math.ceil(duration / SLOT_MIN));
+        const col = 2 + dayIndex;
+
+        const status = getStatusForSession(s);
+
+        return {
+          session: s,
+          col,
+          rowStart,
+          rowSpan,
+          durationMin: minutesBetween(s.startAt, s.endAt),
+          status,
+        };
+      })
+      .filter(Boolean) as Array<{
+      session: SessionDto;
+      col: number;
+      rowStart: number;
+      rowSpan: number;
+      durationMin: number;
+      status: SessionStatus;
+    }>;
+  }, [data?.items, weekStart, getStatusForSession]);
+
+  const bookMut = useBookScheduleSession();
+
+  const [okOpen, setOkOpen] = useState(false);
+  const [errOpen, setErrOpen] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingSession, setPendingSession] = useState<SessionDto | null>(null);
 
   const cardBg = isDark ? theme.palette.background.paper : theme.palette.grey[100];
   const gridBorder = alpha(theme.palette.divider, 0.9);
   const headerBg = isDark ? alpha(theme.palette.common.white, 0.04) : alpha(theme.palette.grey[900], 0.02);
+
+  function onTileClick(s: SessionDto) {
+    const status = getStatusForSession(s);
+    if (status !== "available") return;
+
+    setPendingSession(s);
+    setConfirmOpen(true);
+  }
+
+  async function confirmBooking() {
+    if (!pendingSession) return;
+
+    try {
+      await bookMut.mutateAsync({ sessionId: pendingSession.id });
+      setConfirmOpen(false);
+      setPendingSession(null);
+      setOkOpen(true);
+    } catch (e: unknown) {
+      let msg = "Nie udało się zapisać";
+      if (typeof e === "object" && e !== null) {
+        const maybeAxios = e as { response?: { data?: { message?: string } }; message?: string };
+        msg = maybeAxios.response?.data?.message ?? maybeAxios.message ?? msg;
+      }
+      setErrMsg(msg);
+      setErrOpen(true);
+      setConfirmOpen(false);
+      setPendingSession(null);
+    }
+  }
 
   return (
     <Paper
@@ -149,6 +233,8 @@ export const UserSchedule = () => {
         borderRadius: 3,
         backgroundColor: cardBg,
         border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+        maxWidth: 1400,
+        mx: "auto",
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -172,15 +258,6 @@ export const UserSchedule = () => {
         </Box>
       </Box>
 
-      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2, flexWrap: "wrap" }}>
-        <Typography variant="body2" color="text.secondary">
-          Status:
-        </Typography>
-        {statusChip("booked")}
-        {statusChip("available")}
-        {statusChip("full")}
-      </Stack>
-
       {isLoading && (
         <Box display="flex" justifyContent="center" py={3}>
           <CircularProgress size={28} />
@@ -194,19 +271,19 @@ export const UserSchedule = () => {
       )}
 
       {!isLoading && !isError && (
-        <Box sx={{ width: "100%", overflowX: "auto", overflowY: "hidden", pb: 1 }}>
+        <Box sx={{ width: "100%", overflowX: "auto", overflowY: "auto", pb: 1, maxHeight: 620 }}>
           <Box
             sx={{
-              minWidth: 2000,
+              minWidth: 1100,
               display: "grid",
-              gridTemplateColumns: `72px repeat(7, 1fr)`,
-              gridAutoRows: "minmax(56px, auto)",
+              gridTemplateColumns: `88px repeat(7, 1fr)`,
+              gridTemplateRows: `48px repeat(${slots.length}, 44px)`,
               border: `1px solid ${gridBorder}`,
               borderRadius: 2,
               overflow: "hidden",
+              position: "relative",
             }}
           >
-            {/* Header: godzina */}
             <Box
               sx={{
                 backgroundColor: headerBg,
@@ -223,7 +300,6 @@ export const UserSchedule = () => {
               </Typography>
             </Box>
 
-            {/* Header: dni tygodnia (z datą) */}
             {days.map((d) => (
               <Box
                 key={d.toISOString()}
@@ -242,114 +318,169 @@ export const UserSchedule = () => {
               </Box>
             ))}
 
-            {/* Grid */}
-            {HOURS.map((hour) => (
-              <Box key={hour} sx={{ display: "contents" }}>
-                <Box
-                  sx={{
-                    borderTop: `1px solid ${gridBorder}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 12,
-                    color: "text.secondary",
-                    px: 0.5,
-                  }}
-                >
-                  <Stack direction="row" spacing={0.5} alignItems="center">
-                    <AccessTimeIcon sx={{ fontSize: 14 }} />
-                    <span>{hour}:00</span>
-                  </Stack>
-                </Box>
+            {slots.map((t, idx) => {
+              const showLabel = t.minute === 0;
+              const row = 2 + idx;
 
-                {days.map((_, dayIndex) => {
-                  const slotSessions = getSessionsForSlot(dayIndex, hour);
-                  const hasAny = dayHasAnySessions(dayIndex);
+              return (
+                <Box key={`${t.hour}:${t.minute}`} sx={{ display: "contents" }}>
+                  <Box
+                    sx={{
+                      gridColumn: 1,
+                      gridRow: row,
+                      borderTop: `1px solid ${gridBorder}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      px: 0.5,
+                      color: "text.secondary",
+                      fontSize: 12,
+                    }}
+                  >
+                    {showLabel ? (
+                      <Stack direction="row" spacing={0.5} alignItems="center">
+                        <AccessTimeIcon sx={{ fontSize: 14 }} />
+                        <span>{String(t.hour).padStart(2, "0")}:00</span>
+                      </Stack>
+                    ) : (
+                      <span style={{ opacity: 0.3 }}>{String(t.hour).padStart(2, "0")}:30</span>
+                    )}
+                  </Box>
 
-                  return (
+                  {days.map((_, dayIndex) => (
                     <Box
-                      key={`${dayIndex}-${hour}`}
+                      key={`${dayIndex}-${idx}`}
                       sx={{
+                        gridColumn: 2 + dayIndex,
+                        gridRow: row,
                         borderTop: `1px solid ${gridBorder}`,
                         borderLeft: `1px solid ${gridBorder}`,
-                        p: 0.5,
-                        minHeight: 56,
+                        backgroundColor: idx % 2 === 1 ? alpha(theme.palette.action.hover, isDark ? 0.05 : 0.03) : "transparent",
+                      }}
+                    />
+                  ))}
+                </Box>
+              );
+            })}
+
+            {blocks.map((b) => {
+              const s = b.session;
+              const reserved = s.reserved;
+              const free = Math.max(0, s.capacity - reserved);
+
+              const bg =
+                b.status === "booked"
+                  ? theme.palette.success.main
+                  : b.status === "full"
+                  ? theme.palette.error.main
+                  : theme.palette.primary.main;
+
+              const tooltip = (
+                <Box sx={{ p: 0.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 0.5 }}>
+                    {s.name}
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: "block" }}>
+                    {s.type} • {s.trainerName} • {levelLabel(s.level)}
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: "block" }}>
+                    {fmtDateTimeRange(s.startAt, s.endAt)} • {b.durationMin} min
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
+                    Miejsca: {reserved}/{s.capacity} (wolne: {free})
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: "block" }}>
+                    Status:{" "}
+                    {b.status === "available"
+                      ? "możesz się zapisać"
+                      : b.status === "booked"
+                      ? "zapisany"
+                      : "brak miejsc"}
+                  </Typography>
+                </Box>
+              );
+
+              return (
+                <Tooltip key={s.id} title={tooltip} arrow placement="top" enterDelay={150}>
+                  <Box
+                    onClick={() => onTileClick(s)}
+                    sx={{
+                      gridColumn: b.col,
+                      gridRow: `${b.rowStart} / span ${b.rowSpan}`,
+                      zIndex: 2,
+                      m: 0.5,
+                      borderRadius: 2,
+                      p: 1,
+                      cursor: b.status === "available" ? "pointer" : "default",
+                      backgroundColor: alpha(bg, isDark ? 0.18 : 0.10),
+                      border: `1px solid ${alpha(bg, 0.55)}`,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      gap: 0.5,
+                      overflow: "hidden",
+                      "&:hover":
+                        b.status === "available"
+                          ? { backgroundColor: alpha(bg, isDark ? 0.24 : 0.14) }
+                          : undefined,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 800,
+                        lineHeight: 1.2,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                      title={s.name}
+                    >
+                      {s.name}
+                    </Typography>
+
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      <Stack spacing={0.5}>
-                        {slotSessions.map((s) => {
-                          const reserved = s.reserved;
-                          const free = Math.max(0, s.capacity - reserved);
-                          const status = getStatusForSession(s);
-
-                          return (
-                            <Paper
-                              key={s.id}
-                              elevation={0}
-                              sx={{
-                                p: 0.75,
-                                borderRadius: 1.5,
-                                backgroundColor: alpha(
-                                  status === "booked"
-                                    ? theme.palette.success.main
-                                    : status === "full"
-                                    ? theme.palette.error.main
-                                    : theme.palette.primary.main,
-                                  isDark ? 0.18 : 0.1
-                                ),
-                                border: `1px solid ${alpha(
-                                  status === "booked"
-                                    ? theme.palette.success.main
-                                    : status === "full"
-                                    ? theme.palette.error.main
-                                    : theme.palette.primary.main,
-                                  0.6
-                                )}`,
-                              }}
-                            >
-                              <Typography variant="body2" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
-                                {s.name}
-                              </Typography>
-
-                              <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
-                                {s.type} • {s.trainerName}
-                              </Typography>
-
-                              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 0.25 }}>
-                                <Stack direction="row" spacing={0.75} alignItems="center">
-                                  <Typography variant="caption" color="text.secondary">
-                                    {levelLabel(s.level)}
-                                  </Typography>
-
-                                  <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <PeopleIcon sx={{ fontSize: 14, opacity: 0.7 }} />
-                                    <Typography variant="caption" color="text.secondary">
-                                      {reserved}/{s.capacity}
-                                      {free > 0 && ` (${free} wolne)`}
-                                    </Typography>
-                                  </Stack>
-                                </Stack>
-
-                                {statusChip(status)}
-                              </Stack>
-                            </Paper>
-                          );
-                        })}
-
-                        {hour === HOURS[0] && !hasAny && (
-                          <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.7 }}>
-                            Brak zajęć tego dnia
-                          </Typography>
-                        )}
-                      </Stack>
-                    </Box>
-                  );
-                })}
-              </Box>
-            ))}
+                      {reserved}/{s.capacity} (wolne: {free})
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              );
+            })}
           </Box>
         </Box>
       )}
+
+      <ConfirmBookingModal
+        open={confirmOpen}
+        sessionName={pendingSession?.name ?? ""}
+        loading={bookMut.isPending}
+        onClose={() => {
+          if (bookMut.isPending) return;
+          setConfirmOpen(false);
+          setPendingSession(null);
+        }}
+        onConfirm={confirmBooking}
+      />
+
+      <Snackbar open={okOpen} autoHideDuration={3500} onClose={() => setOkOpen(false)}>
+        <Alert onClose={() => setOkOpen(false)} severity="success" variant="filled">
+          Zapisano na zajęcia.
+        </Alert>
+      </Snackbar>
+
+      <Snackbar open={errOpen} autoHideDuration={4500} onClose={() => setErrOpen(false)}>
+        <Alert onClose={() => setErrOpen(false)} severity="error" variant="filled">
+          {errMsg}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 };
