@@ -271,8 +271,10 @@ export default function Layout() {
         </Box>
       </Drawer>
 
-      <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Outlet />
+      <Container maxWidth={false} disableGutters>
+        <Box sx={{ px: { xs: 1, sm: 2, md: 3 }, py: 3 }}>
+          <Outlet />
+        </Box>
       </Container>
     </>
   );

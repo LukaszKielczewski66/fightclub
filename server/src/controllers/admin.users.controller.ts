@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { getUsersListSvc, getUserByIdSvc, createUser, updateUserSvc } from "../services/admin.users.service"
-import { CreateUserBody, ListUserItem, UpdateUserBody } from "@/utils/types";
+import { CreateUserBody, UpdateUserBody } from "@/utils/types";
 
 //  *********** GET /api/admin/users
 export async function getUsersListCtrl(req: Request, res: Response) {

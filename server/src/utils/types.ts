@@ -56,11 +56,26 @@ type UpdateUserBody = {
   active?: boolean;
 };
 
+type CreateSessionInput = {
+  name: string;
+  type: "BJJ" | "MMA" | "Cross";
+  level: "beginner" | "intermediate" | "advanced";
+  capacity: number;
+  weekStart?: string;
+  weekday?: number;
+  startHour: number;
+  startMinute?: number;
+  endHour: number;
+  endMinute?: number;
+  trainerId?: string;
+};
+
 export {
     CreateUserBody,
     ListUsersParams,
     ListUserItem,
     ListUsersResult,
     UserDetails,
-    UpdateUserBody
+    UpdateUserBody,
+    CreateSessionInput
 }

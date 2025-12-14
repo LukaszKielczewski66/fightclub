@@ -16,6 +16,19 @@ export type SessionDto = {
   participantsIds: string[];
 };
 
+export type CreateSessionPayload = {
+  name: string;
+  type: SessionType;
+  level: Level;
+  capacity: number;
+  weekStart: string;
+  weekday: number;
+  startHour: number;
+  startMinute: number;
+  endHour: number;
+  endMinute: number;
+};
+
 
 export type ListSessionsResponse = { items: SessionDto[] };
 
@@ -26,6 +39,16 @@ export async function getScheduleSessionsApi(args: {
 }): Promise<ListSessionsResponse> {
   const res = await http.get<ListSessionsResponse>("/schedule/sessions", {
     params: { from: args.from, to: args.to },
+    headers: { Authorization: `Bearer ${args.token}` },
+  });
+  return res.data;
+}
+
+export async function createScheduleSessionApi(args: {
+  payload: CreateSessionPayload;
+  token: string;
+}): Promise<SessionDto> {
+  const res = await http.post<SessionDto>("/schedule/sessions", args.payload, {
     headers: { Authorization: `Bearer ${args.token}` },
   });
   return res.data;

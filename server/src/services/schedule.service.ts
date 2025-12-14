@@ -1,21 +1,7 @@
 import mongoose from "mongoose";
 import { Session } from "../models/Session";
 import { User } from "../models/User";
-
-export type CreateSessionInput = {
-  name: string;
-  type: "BJJ" | "MMA" | "Cross";
-  level: "beginner" | "intermediate" | "advanced";
-  capacity: number;
-
-  weekStart?: string;
-  weekday?: number;
-  startHour: number;
-  startMinute?: number;
-  endHour: number;
-  endMinute?: number;
-  trainerId?: string;
-};
+import { CreateSessionInput } from "@/utils/types";
 
 function parseDateOrNull(v: unknown) {
   if (typeof v !== "string") return null;
@@ -106,13 +92,20 @@ export async function createScheduleSessionSvc(
 
   if (endAt <= startAt) throw new Error("endAt musi być później niż startAt");
 
-  const overlap = await Session.findOne({
+  const overlapAny = await Session.findOne({
+    startAt: { $lt: endAt },
+    endAt: { $gt: startAt },
+  }).select("_id");
+
+  if (overlapAny) throw new Error("Kolizja: w tym czasie są już inne zajęcia");
+
+  const overlapTrainer = await Session.findOne({
     trainerId: finalTrainerId,
     startAt: { $lt: endAt },
     endAt: { $gt: startAt },
   }).select("_id");
 
-  if (overlap) throw new Error("Kolizja: trener ma już zajęcia w tym czasie");
+  if (overlapTrainer) throw new Error("Kolizja: trener ma już zajęcia w tym czasie");
 
   const created = await Session.create({
     name,
