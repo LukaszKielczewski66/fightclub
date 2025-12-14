@@ -1,27 +1,34 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createBrowserRouter, Outlet } from "react-router-dom";
+import { createBrowserRouter, Outlet, Navigate } from "react-router-dom";
+
 import Layout from "@/components/layout/Layout";
 import Home from "@/pages/Home/Home";
 import Login from "@/pages/Login/Login";
+
 import ProtectedRoute from "@/features/auth/ProtectedRoute";
 import RoleGate from "@/features/auth/RoleGate";
-import Bookings from "@/pages/Bookings/BookingsPage";
+
+// USER
 import { UserSchedule } from "@/pages/Schedule/UserSchedule";
+import Bookings from "@/pages/Bookings/BookingsPage";
+import HistoryPage from "@/pages/History/HistoryPage";
+
+// TRAINER
 import TrainerProfile from "@/pages/Trainer/TrainerProfile";
 import TrainerCreateSessions from "@/pages/Trainer/TrainerCreateSessions";
 import TrainerMySessions from "@/pages/Trainer/TrainerMySessions";
 import TrainerAttendance from "@/pages/Trainer/TrainerAttendance";
 import TrainerParticipants from "@/pages/Trainer/TrainerParticipants";
-import HistoryPage from "@/pages/History/HistoryPage";
 import TrainerReports from "@/pages/Trainer/TrainerReports";
 
-
-
+// ADMIN 
 const AdminPage = () => <div>Panel admina</div>;
+
 const AppPage = () => <div>Panel aplikacji (trener/admin)</div>;
 
 export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
+
   {
     path: "/",
     element: <Layout />,
@@ -31,14 +38,27 @@ export const router = createBrowserRouter([
       {
         element: <ProtectedRoute />,
         children: [
+          // ======================
+          // USER
+          // ======================
           {
-            path: "app",
+            path: "user",
             element: (
-              <RoleGate roles={["trainer", "admin"]}>
-                <AppPage />
+              <RoleGate roles={["user"]}>
+                <Outlet />
               </RoleGate>
             ),
+            children: [
+              { index: true, element: <Home /> },
+              { path: "schedule", element: <UserSchedule /> },
+              { path: "bookings", element: <Bookings /> },
+              { path: "history", element: <HistoryPage /> },
+            ],
           },
+
+          // ======================
+          // TRAINER
+          // ======================
           {
             path: "trainer",
             element: (
@@ -55,6 +75,10 @@ export const router = createBrowserRouter([
               { path: "reports", element: <TrainerReports /> },
             ],
           },
+
+          // ======================
+          // ADMIN
+          // ======================
           {
             path: "admin",
             element: (
@@ -64,32 +88,21 @@ export const router = createBrowserRouter([
             ),
           },
 
+          { path: "schedule", element: <Navigate to="/user/schedule" replace /> },
+          { path: "bookings", element: <Navigate to="/user/bookings" replace /> },
+          { path: "history", element: <Navigate to="/user/history" replace /> },
           {
-            path: "bookings",
+            path: "app",
             element: (
-              <RoleGate roles={["user"]}>
-                <Bookings />
+              <RoleGate roles={["trainer", "admin"]}>
+                <AppPage />
               </RoleGate>
             ),
           },
-
-          {
-            path: "history",
-            element: (
-              <RoleGate roles={["user"]}>
-                <HistoryPage />
-              </RoleGate>
-            ),
-          },
-          {
-            path: "schedule",
-            element: <RoleGate roles={["user"]}>
-              <UserSchedule />
-            </RoleGate>
-          }
         ],
       },
     ],
   },
+
   { path: "*", element: <div>404</div> },
 ]);

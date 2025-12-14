@@ -24,7 +24,13 @@ function isFromState(v: unknown): v is FromState {
 function roleHome(role: User["role"]) {
   if (role === "admin") return "/admin";
   if (role === "trainer") return "/trainer";
-  return "/";
+  return "/user";
+}
+
+function isPathAllowedForRole(pathname: string, role: string) {
+  if (role === "admin") return true;
+  if (role === "trainer") return pathname.startsWith("/trainer");
+  return pathname.startsWith("/user");
 }
 
 export default function Login() {
@@ -44,9 +50,17 @@ export default function Login() {
     try {
       const res = await login(email, password);
 
+      const role = res.user.role;
+
       const state = isFromState(location.state) ? location.state : undefined;
-      const target = state?.from?.pathname ?? roleHome(res.user.role);
-      navigate(target, { replace: true });
+      const fromPath = state?.from?.pathname;
+
+      const target =
+        fromPath && isPathAllowedForRole(fromPath, role)
+          ? fromPath
+          : roleHome(role);
+
+navigate(target, { replace: true });
     } catch (error: unknown) {
       if (isAxiosError(error)) setErr(error.response?.data?.message ?? "Błąd logowania");
       else if (error instanceof Error) setErr(error.message);

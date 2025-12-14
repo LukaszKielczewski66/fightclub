@@ -48,30 +48,13 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", to: "/", icon: <HomeIcon />, roles: ["user", "admin"] },
-  {
-    label: "Grafik",
-    to: "/schedule",
-    icon: <CalendarMonthIcon />,
-    roles: ["user"],
-  },
-  {
-    label: "Moje zapisy",
-    to: "/bookings",
-    icon: <EventNoteIcon />,
-    roles: ["user"],
-  },
-  {
-    label: "Historia",
-    to: "/history",
-    icon: <HistoryIcon />,
-    roles: ["user"],
-  },
-  {
-    label: "Aplikacja",
-    to: "/app",
-    icon: <DashboardIcon />,
-    roles: ["admin"],
-  },
+
+  // USER
+  { label: "Grafik", to: "/user/schedule", icon: <CalendarMonthIcon />, roles: ["user"] },
+  { label: "Moje zapisy", to: "/user/bookings", icon: <EventNoteIcon />, roles: ["user"] },
+  { label: "Historia", to: "/user/history", icon: <HistoryIcon />, roles: ["user"] },
+
+  // TRAINER
   { label: "Profil trenera", to: "/trainer", icon: <PersonIcon />, roles: ["admin", "trainer"] },
   {
     label: "Dodaj zajęcia",
@@ -103,6 +86,8 @@ const NAV_ITEMS: NavItem[] = [
     icon: <AssessmentIcon />,
     roles: ["admin", "trainer"],
   },
+
+  // ADMIN
   { label: "Admin", to: "/admin", icon: <AdminPanelSettingsIcon />, roles: ["admin"] },
 ];
 
