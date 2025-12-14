@@ -53,3 +53,19 @@ export async function createScheduleSessionApi(args: {
   });
   return res.data;
 }
+
+export async function getMySessionsApi(args: {
+  token: string;
+  from?: string;
+  to?: string;
+}): Promise<ListSessionsResponse> {
+  const res = await http.get<ListSessionsResponse>("/schedule/my-sessions", {
+    headers: { Authorization: `Bearer ${args.token}` },
+    params: {
+      from: args.from ?? undefined,
+      to: args.to ?? undefined,
+    },
+  });
+  return res.data;
+}
+

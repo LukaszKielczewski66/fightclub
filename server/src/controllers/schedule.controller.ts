@@ -53,3 +53,43 @@ export async function createScheduleSessionCtrl(req: Request, res: Response) {
     return res.status(status).json({ message: msg });
   }
 }
+
+export async function listMySessionsCtrl(req: Request, res: Response) {
+  const from = parseDateOrNull(req.query.from);
+  const to = parseDateOrNull(req.query.to);
+
+  const trainerId =
+    req.user?.role === "admin" && typeof req.query.trainerId === "string"
+      ? req.query.trainerId
+      : req.user!.id;
+
+  const filter: any = { trainerId };
+
+  if (from && to) {
+    filter.startAt = { $gte: from, $lt: to };
+  } else {
+    filter.startAt = { $gte: new Date() };
+  }
+
+  const sessions = await Session.find(filter)
+    .sort({ startAt: 1 })
+    .select("name type level trainerId startAt endAt capacity participants")
+    .populate("trainerId", "name")
+    .lean();
+
+  const items = sessions.map((s: any) => ({
+    id: String(s._id),
+    name: s.name,
+    type: s.type,
+    level: s.level,
+    trainerName: s.trainerId?.name ?? "Trainer",
+    capacity: s.capacity,
+    startAt: new Date(s.startAt).toISOString(),
+    endAt: new Date(s.endAt).toISOString(),
+    reserved: Array.isArray(s.participants) ? s.participants.length : 0,
+    participantsIds: (s.participants ?? []).map((id: any) => String(id)),
+  }));
+
+  return res.json({ items });
+}
+
