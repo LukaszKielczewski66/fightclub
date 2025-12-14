@@ -6,18 +6,10 @@ import {
   type Types,
 } from "mongoose";
 import bcrypt from "bcryptjs";
+import { IUser, TrainingGoal } from "@/utils/types";
 
 export type UserRole = "admin" | "trainer" | "user";
 
-export interface IUser {
-  email: string;
-  name: string;
-  role: UserRole;
-  passwordHash: string;
-  active: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
 export interface IUserMethods {
   comparePassword(plain: string): Promise<boolean>;
 }
@@ -29,7 +21,6 @@ export type UserDoc = HydratedDocument<IUser, IUserMethods> & {
 };
 
 type UserModel = Model<IUser, {}, IUserMethods>;
-
 
 const UserSchema = new Schema<IUser, UserModel, IUserMethods>(
   {
@@ -49,6 +40,25 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>(
     },
     passwordHash: { type: String, required: true },
     active: { type: Boolean, default: true },
+
+    age: { type: Number, min: 5, max: 120, required: false },
+    gender: { type: String, enum: ["male", "female", "other", "unknown"], required: false },
+    experienceMonths: { type: Number, min: 0, max: 600, required: false },
+    trainingGoal: {
+  type: String,
+  enum: [
+    "lose_weight",
+    "build_muscle",
+    "improve_condition",
+    "learn_self_defense",
+    "competition_preparation",
+    "technique_improvement",
+    "rehabilitation",
+    "general_fitness",
+    "stress_relief",
+  ],
+  required: false,
+},
   },
   {
     timestamps: true,

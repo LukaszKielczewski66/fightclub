@@ -4,6 +4,8 @@ import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.routes";
 import adminUsersRouter from "./routes/admin.users.routes";
 import scheduleRouter from "./routes/schedule.routes";
+import usersRouter from "./routes/users.routes";
+
 
 export const createApp = () => {
   const app = express();
@@ -20,6 +22,10 @@ export const createApp = () => {
   
   // SCHEDULE
   app.use("/api/schedule", scheduleRouter);
+
+  // USER
+  app.use("/api/users", usersRouter);
+
 
   app.use((_req, res) => res.status(404).json({ message: "Not Found" }));
   return app;

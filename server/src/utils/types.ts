@@ -70,7 +70,35 @@ type CreateSessionInput = {
   trainerId?: string;
 };
 
+type UserGender = "male" | "female" | "other" | "unknown";
+
+export type TrainingGoal =
+  | "lose_weight"
+  | "build_muscle"
+  | "improve_condition"
+  | "learn_self_defense"
+  | "competition_preparation"
+  | "technique_improvement"
+  | "rehabilitation"
+  | "general_fitness"
+  | "stress_relief";
+
+interface IUser {
+  email: string;
+  name: string;
+  role: UserRole;
+  passwordHash: string;
+  active: boolean;
+  age?: number;
+  gender?: UserGender;
+  experienceMonths?: number;
+  trainingGoal?: TrainingGoal;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export {
+    IUser,
     CreateUserBody,
     ListUsersParams,
     ListUserItem,
