@@ -23,7 +23,16 @@ import type { Level, SessionType } from "@/api/schedule.api";
 import { useScheduleSessions } from "@/features/schedule/useScheduleSessions";
 import { useCreateScheduleSession } from "@/features/schedule/useCreateScheduleSession";
 
-const HOURS = [16, 17, 18, 19, 20, 21]; // jak u usera
+const START_HOUR = 16;
+const END_HOUR = 22; // exclusive
+
+const SLOTS: Array<{ hour: number; minute: number }> = Array.from(
+  { length: (END_HOUR - START_HOUR) * 2 },
+  (_, i) => {
+    const totalMin = START_HOUR * 60 + i * 30;
+    return { hour: Math.floor(totalMin / 60), minute: totalMin % 60 };
+  },
+);
 
 function startOfWeekMonday(date: Date) {
   const d = new Date(date);
@@ -56,7 +65,7 @@ function isSlotBlockedByAnySession(
   slotStart: Date,
 ) {
   const slotEnd = new Date(slotStart);
-  slotEnd.setHours(slotStart.getHours() + 1, 0, 0, 0);
+  slotEnd.setTime(slotStart.getTime() + 30 * 60 * 1000); // +30 min
 
   return sessions.some((s) => {
     const a = new Date(s.startAt).getTime();
@@ -70,6 +79,19 @@ function computeEndFromDuration(startHour: number, startMinute: number, duration
   const endHour = Math.floor(total / 60);
   const endMinute = total % 60;
   return { endHour, endMinute };
+}
+
+function hasErrorMessage(e: unknown): e is { message?: string } {
+  return typeof e === "object" && e !== null && "message" in e;
+}
+
+function hasResponseMessage(e: unknown): e is { response?: { data?: { message?: string } } } {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "response" in e &&
+    typeof (e as { response?: unknown }).response === "object"
+  );
 }
 
 export default function TrainerCreateSessions() {
@@ -88,7 +110,7 @@ export default function TrainerCreateSessions() {
   const fromIso = useMemo(() => weekStart.toISOString(), [weekStart]);
   const toIso = useMemo(() => weekEndExclusive.toISOString(), [weekEndExclusive]);
 
-  const { data, isLoading, isError } = useScheduleSessions(fromIso, toIso);
+  const { data, isLoading, isError, refetch } = useScheduleSessions(fromIso, toIso);
   const sessions = data?.items ?? [];
 
   const days = useMemo(
@@ -97,7 +119,11 @@ export default function TrainerCreateSessions() {
   );
 
   // wybrany slot
-  const [selected, setSelected] = useState<{ dayIndex: number; hour: number } | null>(null);
+  const [selected, setSelected] = useState<{
+    dayIndex: number;
+    hour: number;
+    minute: number;
+  } | null>(null);
 
   // formularz
   const [name, setName] = useState("");
@@ -118,7 +144,7 @@ export default function TrainerCreateSessions() {
     ? alpha(theme.palette.common.white, 0.04)
     : alpha(theme.palette.grey[900], 0.02);
 
-  function getSessionsForSlot(dayIndex: number, hour: number) {
+  function getSessionsForSlot(dayIndex: number, hour: number, minute: number) {
     const day = days[dayIndex];
     return sessions.filter((s) => {
       const start = new Date(s.startAt);
@@ -126,7 +152,8 @@ export default function TrainerCreateSessions() {
         start.getFullYear() === day.getFullYear() &&
         start.getMonth() === day.getMonth() &&
         start.getDate() === day.getDate() &&
-        start.getHours() === hour
+        start.getHours() === hour &&
+        start.getMinutes() === minute
       );
     });
   }
@@ -155,7 +182,7 @@ export default function TrainerCreateSessions() {
 
     const weekday = selected.dayIndex + 1; // 1..7 (pon..nd)
     const startHour = selected.hour;
-    const startMinute = 0;
+    const startMinute = selected.minute;
 
     const { endHour, endMinute } = computeEndFromDuration(startHour, startMinute, durationMin);
 
@@ -183,15 +210,16 @@ export default function TrainerCreateSessions() {
       setName("");
       setDurationMin(60);
       setSelected(null);
+      refetch();
     } catch (e: unknown) {
       let msg = "Nie udało się utworzyć zajęć";
-      if (typeof e === "object" && e !== null) {
-        const maybeAxios = e as {
-          response?: { data?: { message?: string } };
-          message?: string;
-        };
 
-        msg = maybeAxios.response?.data?.message ?? maybeAxios.message ?? msg;
+      if (hasResponseMessage(e)) {
+        msg =
+          (e as { response?: { data?: { message?: string } } }).response?.data?.message ??
+          msg;
+      } else if (hasErrorMessage(e) && typeof e.message === "string") {
+        msg = e.message;
       }
 
       setErrMsg(msg);
@@ -264,7 +292,11 @@ export default function TrainerCreateSessions() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Wybrany termin:{" "}
             <strong>
-              {selected ? `${fmtDayShort(days[selected.dayIndex])}, ${selected.hour}:00` : "—"}
+              {selected
+                ? `${fmtDayShort(days[selected.dayIndex])}, ${selected.hour}:${
+                    selected.minute === 0 ? "00" : "30"
+                  }`
+                : "—"}
             </strong>
           </Typography>
 
@@ -323,12 +355,7 @@ export default function TrainerCreateSessions() {
               fullWidth
             />
 
-            <Button
-              variant="contained"
-              size="large"
-              onClick={submit}
-              disabled={createMut.isPending}
-            >
+            <Button variant="contained" size="large" onClick={submit} disabled={createMut.isPending}>
               {createMut.isPending ? "Dodawanie..." : "Dodaj zajęcia"}
             </Button>
           </Stack>
@@ -344,9 +371,15 @@ export default function TrainerCreateSessions() {
             border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
           }}
         >
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Grafik (kliknij wolny slot)
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <Typography variant="h6">Grafik (kliknij wolny slot)</Typography>
+
+            <Box sx={{ ml: "auto" }}>
+              <Button size="small" variant="outlined" onClick={() => refetch()} disabled={isLoading}>
+                Odśwież
+              </Button>
+            </Box>
+          </Box>
 
           {isLoading && (
             <Box display="flex" justifyContent="center" py={3}>
@@ -361,15 +394,13 @@ export default function TrainerCreateSessions() {
           )}
 
           {!isLoading && !isError && (
-            <Box
-              sx={{ width: "100%", overflowX: "auto", overflowY: "auto", pb: 1, maxHeight: 520 }}
-            >
+            <Box sx={{ width: "100%", overflowX: "auto", overflowY: "auto", pb: 1, maxHeight: 520 }}>
               <Box
                 sx={{
-                  minWidth: 800,
+                  minWidth: 900,
                   display: "grid",
                   gridTemplateColumns: `72px repeat(7, 1fr)`,
-                  gridAutoRows: "minmax(56px, auto)",
+                  gridAutoRows: "minmax(44px, auto)",
                   border: `1px solid ${gridBorder}`,
                   borderRadius: 2,
                   overflow: "hidden",
@@ -412,8 +443,8 @@ export default function TrainerCreateSessions() {
                   </Box>
                 ))}
 
-                {HOURS.map((hour) => (
-                  <Box key={hour} sx={{ display: "contents" }}>
+                {SLOTS.map(({ hour, minute }) => (
+                  <Box key={`${hour}:${minute}`} sx={{ display: "contents" }}>
                     <Box
                       sx={{
                         borderTop: `1px solid ${gridBorder}`,
@@ -425,46 +456,43 @@ export default function TrainerCreateSessions() {
                         px: 0.5,
                       }}
                     >
-                      {hour}:00
+                      {hour}:{minute === 0 ? "00" : "30"}
                     </Box>
 
                     {days.map((day, dayIndex) => {
                       const slotStart = new Date(day);
-                      slotStart.setHours(hour, 0, 0, 0);
+                      slotStart.setHours(hour, minute, 0, 0);
 
                       const blocked = isSlotBlockedByAnySession(sessions, slotStart);
                       const isSelected =
-                        !!selected && selected.dayIndex === dayIndex && selected.hour === hour;
+                        !!selected &&
+                        selected.dayIndex === dayIndex &&
+                        selected.hour === hour &&
+                        selected.minute === minute;
 
-                      const slotSessions = getSessionsForSlot(dayIndex, hour);
+                      const slotSessions = getSessionsForSlot(dayIndex, hour, minute);
 
                       return (
                         <Box
-                          key={`${dayIndex}-${hour}`}
+                          key={`${dayIndex}-${hour}-${minute}`}
                           onClick={() => {
-                            if (!blocked) setSelected({ dayIndex, hour });
+                            if (!blocked) setSelected({ dayIndex, hour, minute });
                           }}
                           sx={{
                             borderTop: `1px solid ${gridBorder}`,
                             borderLeft: `1px solid ${gridBorder}`,
                             p: 0.75,
-                            minHeight: 56,
+                            minHeight: 44,
                             cursor: blocked ? "not-allowed" : "pointer",
                             backgroundColor: isSelected
                               ? alpha(theme.palette.primary.main, isDark ? 0.22 : 0.14)
                               : blocked
-                                ? alpha(
-                                    theme.palette.action.disabledBackground,
-                                    isDark ? 0.18 : 0.35,
-                                  )
+                                ? alpha(theme.palette.action.disabledBackground, isDark ? 0.18 : 0.35)
                                 : "transparent",
                             "&:hover": blocked
                               ? undefined
                               : {
-                                  backgroundColor: alpha(
-                                    theme.palette.primary.main,
-                                    isDark ? 0.16 : 0.1,
-                                  ),
+                                  backgroundColor: alpha(theme.palette.primary.main, isDark ? 0.16 : 0.1),
                                 },
                           }}
                         >
@@ -486,11 +514,7 @@ export default function TrainerCreateSessions() {
                           )}
 
                           {!slotSessions.length && !blocked && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ opacity: 0.7 }}
-                            >
+                            <Typography variant="caption" color="text.secondary" sx={{ opacity: 0.7 }}>
                               Wolne
                             </Typography>
                           )}
