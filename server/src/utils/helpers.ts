@@ -22,3 +22,14 @@ export function addDays(date: Date, days: number) {
 export function isIntInRange(v: unknown, min: number, max: number) {
   return Number.isInteger(v) && typeof v === "number" && v >= min && v <= max;
 }
+
+export function toDateOrThrow(value: unknown, fieldName: string): Date {
+  if (value instanceof Date) return value;
+  if (typeof value === "string" || typeof value === "number") {
+    const d = new Date(value);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  const err = new Error(`Nieprawidłowe pole ${fieldName}`);
+  (err as { status?: number }).status = 500;
+  throw err;
+}
