@@ -23,12 +23,20 @@ export type UserProfileDto = {
   gender: Gender | null;
   experienceMonths: number | null;
   trainingGoal: TrainingGoal | null;
+  specializations: TrainerSpecialization[];
+  levelsTaught: TrainerLevel[];
+  maxWeeklyHours: number | null;
 };
 
+export type TrainerSpecialization = "MMA" | "BJJ" | "Cross";
+export type TrainerLevel = "beginner" | "intermediate" | "advanced";
 
 export type UpdateMyProfilePayload = {
   age?: number | null;
   gender?: Gender | null;
   experienceMonths?: number | null;
   trainingGoal?: TrainingGoal | null;
+  specializations: TrainerSpecialization[];
+  levelsTaught: TrainerLevel[];
+  maxWeeklyHours: number | null;
 };

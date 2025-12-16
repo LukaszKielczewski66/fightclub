@@ -6,7 +6,7 @@ import {
   type Types,
 } from "mongoose";
 import bcrypt from "bcryptjs";
-import { IUser, TrainingGoal } from "@/utils/types";
+import { IUser } from "@/utils/types";
 
 export type UserRole = "admin" | "trainer" | "user";
 
@@ -42,23 +42,45 @@ const UserSchema = new Schema<IUser, UserModel, IUserMethods>(
     active: { type: Boolean, default: true },
 
     age: { type: Number, min: 5, max: 120, required: false },
-    gender: { type: String, enum: ["male", "female", "other", "unknown"], required: false },
+    gender: {
+      type: String,
+      enum: ["male", "female", "other", "unknown"],
+      required: false,
+    },
     experienceMonths: { type: Number, min: 0, max: 600, required: false },
     trainingGoal: {
-  type: String,
-  enum: [
-    "lose_weight",
-    "build_muscle",
-    "improve_condition",
-    "learn_self_defense",
-    "competition_preparation",
-    "technique_improvement",
-    "rehabilitation",
-    "general_fitness",
-    "stress_relief",
-  ],
-  required: false,
-},
+      type: String,
+      enum: [
+        "lose_weight",
+        "build_muscle",
+        "improve_condition",
+        "learn_self_defense",
+        "competition_preparation",
+        "technique_improvement",
+        "rehabilitation",
+        "general_fitness",
+        "stress_relief",
+      ],
+      required: false,
+    },
+    specializations: {
+      type: [String],
+      enum: ["MMA", "BJJ", "Cross"],
+      required: false,
+    },
+
+    levelsTaught: {
+      type: [String],
+      enum: ["beginner", "intermediate", "advanced"],
+      required: false,
+    },
+
+    maxWeeklyHours: {
+      type: Number,
+      min: 0,
+      max: 60,
+      required: false,
+    },
   },
   {
     timestamps: true,

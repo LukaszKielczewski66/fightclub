@@ -83,6 +83,8 @@ export type TrainingGoal =
   | "general_fitness"
   | "stress_relief";
 
+export type TrainerSpecialization = "MMA" | "BJJ" | "Cross";
+export type TrainerLevel = "beginner" | "intermediate" | "advanced";
 interface IUser {
   email: string;
   name: string;
@@ -95,6 +97,9 @@ interface IUser {
   trainingGoal?: TrainingGoal;
   createdAt?: Date;
   updatedAt?: Date;
+  specializations?: TrainerSpecialization[];
+  levelsTaught?: TrainerLevel[];
+  maxWeeklyHours?: number | null;
 }
 
 export {

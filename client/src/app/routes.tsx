@@ -18,7 +18,6 @@ import TrainerProfile from "@/pages/Trainer/TrainerProfile";
 import TrainerCreateSessions from "@/pages/Trainer/TrainerCreateSessions";
 import TrainerMySessions from "@/pages/Trainer/TrainerMySessions";
 import TrainerAttendance from "@/pages/Trainer/TrainerAttendance";
-import TrainerParticipants from "@/pages/Trainer/TrainerParticipants";
 import TrainerReports from "@/pages/Trainer/TrainerReports";
 
 // ADMIN 
@@ -71,7 +70,6 @@ export const router = createBrowserRouter([
               { path: "schedule", element: <TrainerCreateSessions /> },
               { path: "my-sessions", element: <TrainerMySessions /> },
               { path: "attendance", element: <TrainerAttendance /> },
-              { path: "participants", element: <TrainerParticipants /> },
               { path: "reports", element: <TrainerReports /> },
             ],
           },
