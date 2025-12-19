@@ -45,7 +45,7 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Home", to: "/", icon: <HomeIcon />, roles: ["user", "admin"] },
+  { label: "Home", to: "/", icon: <HomeIcon />, roles: ["user"] },
 
   // USER
   { label: "Grafik", to: "/user/schedule", icon: <CalendarMonthIcon />, roles: ["user"] },

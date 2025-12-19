@@ -1,8 +1,8 @@
 import { useAuth } from "@/features/auth/useAuth";
 import HomePublic from "./HomePublic";
-import HomeAdmin from "./HomeAdmin";
 import HomeTrainer from "./HomeTrainer";
 import HomeClient from "./HomeClient";
+import { AdminUsers } from "../Admin/AdminUsers";
 
 export default function Home() {
   const { user } = useAuth();
@@ -11,7 +11,7 @@ export default function Home() {
 
   switch (user.role) {
     case "admin":
-      return <HomeAdmin />;
+      return <AdminUsers />;
     case "trainer":
       return <HomeTrainer />;
     case "user":
