@@ -102,6 +102,16 @@ interface IUser {
   maxWeeklyHours?: number | null;
 }
 
+type SessionLean = {
+  _id: any;
+  name: string;
+  type: string;
+  level: string;
+  startAt: Date;
+  endAt: Date;
+  participants: any[];
+};
+
 export {
     IUser,
     CreateUserBody,
@@ -110,5 +120,6 @@ export {
     ListUsersResult,
     UserDetails,
     UpdateUserBody,
-    CreateSessionInput
+    CreateSessionInput,
+    SessionLean
 }

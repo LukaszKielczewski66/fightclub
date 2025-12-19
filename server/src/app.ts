@@ -6,6 +6,7 @@ import adminUsersRouter from "./routes/admin.users.routes";
 import scheduleRouter from "./routes/schedule.routes";
 import usersRouter from "./routes/users.routes";
 import attendanceRouter from "./routes/attendance.routes";
+import trainerReportsRouter from "./routes/trainer.reports.routes";
 
 
 export const createApp = () => {
@@ -29,6 +30,9 @@ export const createApp = () => {
 
   // ATTENDANCE
    app.use("/api/trainer/attendance", attendanceRouter);
+
+  // TRAINER REPORTS
+  app.use("/api/trainer/reports", trainerReportsRouter);
 
 
   app.use((_req, res) => res.status(404).json({ message: "Not Found" }));

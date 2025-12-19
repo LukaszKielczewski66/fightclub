@@ -33,7 +33,6 @@ import HistoryIcon from "@mui/icons-material/History";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import PersonIcon from "@mui/icons-material/Person";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
-import GroupsIcon from "@mui/icons-material/Groups";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 
 type Role = "admin" | "trainer" | "user";
@@ -71,12 +70,6 @@ const NAV_ITEMS: NavItem[] = [
     label: "Obecności",
     to: "/trainer/attendance",
     icon: <FactCheckIcon />,
-    roles: ["admin", "trainer"],
-  },
-  {
-    label: "Uczestnicy",
-    to: "/trainer/participants",
-    icon: <GroupsIcon />,
     roles: ["admin", "trainer"],
   },
   {
