@@ -53,34 +53,41 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Historia", to: "/user/history", icon: <HistoryIcon />, roles: ["user"] },
 
   // TRAINER
-  { label: "Profil trenera", to: "/trainer", icon: <PersonIcon />, roles: ["admin", "trainer"] },
+  { label: "Profil trenera", to: "/trainer", icon: <PersonIcon />, roles: ["trainer"] },
   {
     label: "Dodaj zajęcia",
     to: "/trainer/schedule",
     icon: <CalendarMonthIcon />,
-    roles: ["admin", "trainer"],
+    roles: ["trainer"],
   },
   {
     label: "Moje zajęcia",
     to: "/trainer/my-sessions",
     icon: <EventNoteIcon />,
-    roles: ["admin", "trainer"],
+    roles: ["trainer"],
   },
   {
     label: "Obecności",
     to: "/trainer/attendance",
     icon: <FactCheckIcon />,
-    roles: ["admin", "trainer"],
+    roles: ["trainer"],
   },
   {
     label: "Raporty",
     to: "/trainer/reports",
     icon: <AssessmentIcon />,
-    roles: ["admin", "trainer"],
+    roles: ["trainer"],
   },
 
   // ADMIN
-  { label: "Admin", to: "/admin", icon: <AdminPanelSettingsIcon />, roles: ["admin"] },
+  // ADMIN
+  { label: "Dashboard", to: "/admin", icon: <AdminPanelSettingsIcon />, roles: ["admin"] },
+  { label: "Użytkownicy", to: "/admin/users", icon: <PersonIcon />, roles: ["admin"] },
+  { label: "Trenerzy", to: "/admin/trainers", icon: <PersonIcon />, roles: ["admin"] },
+  { label: "Oferta", to: "/admin/classes", icon: <EventNoteIcon />, roles: ["admin"] },
+  { label: "Raporty klubu", to: "/admin/reports", icon: <AssessmentIcon />, roles: ["admin"] },
+  { label: "Ustawienia", to: "/admin/settings", icon: <FactCheckIcon />, roles: ["admin"] },
+
 ];
 
 function VisibleItems(userRole: Role | null) {

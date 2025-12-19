@@ -20,8 +20,13 @@ import TrainerMySessions from "@/pages/Trainer/TrainerMySessions";
 import TrainerAttendance from "@/pages/Trainer/TrainerAttendance";
 import TrainerReports from "@/pages/Trainer/TrainerReports";
 
-// ADMIN 
-const AdminPage = () => <div>Panel admina</div>;
+// ADMIN
+import { AdminDashboard } from "@/pages/Admin/AdminDashboard";
+import { AdminUsers } from "@/pages/Admin/AdminUsers";
+import { AdminTrainers } from "@/pages/Admin/AdminTrainers";
+import { AdminClasses } from "@/pages/Admin/AdminClasses";
+import { AdminReports } from "@/pages/Admin/AdminReports";
+import { AdminSettings } from "@/pages/Admin/AdminSettings";
 
 const AppPage = () => <div>Panel aplikacji (trener/admin)</div>;
 
@@ -78,13 +83,21 @@ export const router = createBrowserRouter([
           // ADMIN
           // ======================
           {
-            path: "admin",
-            element: (
-              <RoleGate roles={["admin"]}>
-                <AdminPage />
-              </RoleGate>
-            ),
-          },
+          path: "admin",
+          element: (
+            <RoleGate roles={["admin"]}>
+              <Outlet />
+            </RoleGate>
+          ),
+          children: [
+            { index: true, element: <AdminDashboard /> },
+            { path: "users", element: <AdminUsers /> },
+            { path: "trainers", element: <AdminTrainers /> },
+            { path: "classes", element: <AdminClasses /> },
+            { path: "reports", element: <AdminReports /> },
+            { path: "settings", element: <AdminSettings /> },
+          ],
+        },
 
           { path: "schedule", element: <Navigate to="/user/schedule" replace /> },
           { path: "bookings", element: <Navigate to="/user/bookings" replace /> },
