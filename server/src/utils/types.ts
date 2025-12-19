@@ -147,6 +147,32 @@ export type TopTrainer = {
   bookingsCount: number;
 };
 
+type TrainerOverviewItem = {
+  id: string;
+  name: string;
+  email: string;
+  active: boolean;
+  specializations: string[];
+  levelsTaught: string[];
+  maxWeeklyHours: number | null;
+
+  week: {
+    sessionsCount: number;
+    hours: number;
+    bookings: number;
+    capacity: number;
+    fillRate: number;
+    overLimit: boolean;
+  };
+
+  last30: {
+    sessionsCount: number;
+    bookings: number;
+    capacity: number;
+    fillRate: number;
+  };
+};
+
 export {
     IUser,
     CreateUserBody,
@@ -156,5 +182,6 @@ export {
     UserDetails,
     UpdateUserBody,
     CreateSessionInput,
-    SessionLean
+    SessionLean,
+    TrainerOverviewItem
 }

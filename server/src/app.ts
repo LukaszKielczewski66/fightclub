@@ -8,6 +8,7 @@ import usersRouter from "./routes/users.routes";
 import attendanceRouter from "./routes/attendance.routes";
 import trainerReportsRouter from "./routes/trainer.reports.routes";
 import adminDashboardRouter from "./routes/admin.dashboard.routes";
+import adminTrainersRouter from "./routes/admin.trainers.routes";
 
 
 export const createApp = () => {
@@ -23,7 +24,8 @@ export const createApp = () => {
   // ADMIN 
   app.use("/api/admin/users", adminUsersRouter);
   app.use("/api/admin/dashboard", adminDashboardRouter);
-  
+  app.use("/api/admin/trainers", adminTrainersRouter);
+
   // SCHEDULE
   app.use("/api/schedule", scheduleRouter);
 
