@@ -13,6 +13,7 @@ import {
   MenuItem,
   FormControlLabel,
   Switch,
+  Alert
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
@@ -57,7 +58,11 @@ export const UserEditDialog = ({
         <Typography variant="body2" color="text.secondary">
           {user?.email}
         </Typography>
-
+        {user?.role === "admin" && (
+          <Alert severity="warning" variant="outlined">
+            Uwaga: edytujesz konto administratora. Zmiana roli lub wyłączenie konta może zablokować dostęp do panelu admina.
+          </Alert>
+        )}
         <TextField
           label="Imię i nazwisko"
           fullWidth

@@ -112,6 +112,41 @@ type SessionLean = {
   participants: any[];
 };
 
+export type DashboardKpis = {
+  usersTotal: number;
+  usersActive: number;
+  trainersTotal: number;
+
+  sessionsCount: number;
+  bookingsCount: number;
+  capacityTotal: number;
+  fillRate: number;
+
+  attendanceMarked: number;
+  attendancePresent: number;
+  attendanceAbsent: number;
+  presentRate: number;
+};
+
+export type UpcomingSession = {
+  id: string;
+  name: string;
+  type: string;
+  level: string;
+  trainerName: string;
+  startAt: string;
+  endAt: string;
+  reserved: number;
+  capacity: number;
+};
+
+export type TopTrainer = {
+  trainerId: string;
+  trainerName: string;
+  sessionsCount: number;
+  bookingsCount: number;
+};
+
 export {
     IUser,
     CreateUserBody,

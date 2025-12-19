@@ -15,8 +15,7 @@ export function useCreateUser() {
       return await createUserApi(payload, token);
     },
     onSuccess: () => {
-    // TODO
-    // queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
   });
 
