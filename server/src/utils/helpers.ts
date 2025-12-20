@@ -1,3 +1,5 @@
+import { ClubSettingsDto } from "./types";
+
 export function parseDateOrNull(v: unknown) {
   if (typeof v !== "string") return null;
   const d = new Date(v);
@@ -32,4 +34,25 @@ export function toDateOrThrow(value: unknown, fieldName: string): Date {
   const err = new Error(`Nieprawidłowe pole ${fieldName}`);
   (err as { status?: number }).status = 500;
   throw err;
+}
+
+export type HttpErr = Error & { status?: number };
+export function httpError(message: string, status: number): HttpErr {
+  const e: HttpErr = new Error(message);
+  e.status = status;
+  return e;
+}
+
+export function toDto(doc: any): ClubSettingsDto {
+  return {
+    clubName: doc.clubName ?? "FightClub",
+    address: doc.address ?? "",
+    contactEmail: doc.contactEmail ?? "",
+    contactPhone: doc.contactPhone ?? "",
+    timezone: doc.timezone ?? "Europe/Warsaw",
+    maxBookingsPerWeek: Number(doc.maxBookingsPerWeek ?? 6),
+    bookingCutoffHours: Number(doc.bookingCutoffHours ?? 2),
+    cancelCutoffHours: Number(doc.cancelCutoffHours ?? 2),
+    updatedAt: new Date(doc.updatedAt ?? Date.now()).toISOString(),
+  };
 }

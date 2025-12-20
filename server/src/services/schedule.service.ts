@@ -3,7 +3,11 @@ import { Session } from "../models/Session";
 import { User } from "../models/User";
 import { CreateSessionInput } from "@/utils/types";
 import { addDays, isIntInRange, parseDateOrNull, startOfWeekMonday } from "../utils/helpers";
+import { getClubSettingsSvc } from "./admin.settings.service";
 
+function hoursDiff(from: Date, to: Date) {
+  return (to.getTime() - from.getTime()) / 36e5;
+}
 
 type HttpErr = Error & { status?: number };
 
@@ -128,6 +132,45 @@ export async function bookSessionSvc(args: { sessionId: string; userId: string }
     throw err;
   }
 
+  const settings = await getClubSettingsSvc();
+
+  const s0 = await Session.findById(sessionId).select("startAt").lean();
+  if (!s0) {
+    const err = new Error("Zajęcia nie istnieją");
+    (err as any).status = 404;
+    throw err;
+  }
+
+  const now = new Date();
+  const startAt = new Date((s0 as any).startAt);
+
+  if (settings.bookingCutoffHours > 0) {
+    const h = hoursDiff(now, startAt);
+    if (h < settings.bookingCutoffHours) {
+      const err = new Error(
+        `Zapisy zamknięte: można zapisać się najpóźniej ${settings.bookingCutoffHours}h przed startem`
+      );
+      (err as any).status = 409;
+      throw err;
+    }
+  }
+
+  if (settings.maxBookingsPerWeek > 0) {
+    const monday = startOfWeekMonday(startAt);
+    const nextMonday = addDays(monday, 7);
+
+    const bookedCount = await Session.countDocuments({
+      participants: userId,
+      startAt: { $gte: monday, $lt: nextMonday },
+    });
+
+    if (bookedCount >= settings.maxBookingsPerWeek) {
+      const err = new Error(`Osiągnięto limit zapisów na tydzień (${settings.maxBookingsPerWeek})`);
+      (err as any).status = 409;
+      throw err;
+    }
+  }
+
   const updated = await Session.findOneAndUpdate(
     {
       _id: sessionId,
@@ -188,6 +231,7 @@ export async function bookSessionSvc(args: { sessionId: string; userId: string }
   };
 }
 
+
 export async function listMyBookingsSvc(args: { userId: string; from?: Date; to?: Date }) {
   const { userId, from, to } = args;
 
@@ -227,6 +271,24 @@ export async function unbookSessionSvc(args: { sessionId: string; userId: string
 
   if (!mongoose.isValidObjectId(sessionId)) {
     throw httpError("Nieprawidłowe id zajęć", 400);
+  }
+
+  const settings = await getClubSettingsSvc();
+
+  const s0 = await Session.findById(sessionId).select("startAt").lean();
+  if (!s0) throw httpError("Zajęcia nie istnieją", 404);
+
+  const now = new Date();
+  const startAt = new Date((s0 as any).startAt);
+
+  if (settings.cancelCutoffHours > 0) {
+    const h = hoursDiff(now, startAt);
+    if (h < settings.cancelCutoffHours) {
+      throw httpError(
+        `Wypisy zamknięte: można wypisać się najpóźniej ${settings.cancelCutoffHours}h przed startem`,
+        409
+      );
+    }
   }
 
   const updated = await Session.findOneAndUpdate(

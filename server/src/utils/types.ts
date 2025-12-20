@@ -173,6 +173,40 @@ type TrainerOverviewItem = {
   };
 };
 
+type DayRow = {
+  date: string;
+  sessionsCount: number;
+  hours: number;
+  reserved: number;
+  capacity: number;
+  fillRate: number;
+  present: number;
+  absent: number;
+};
+
+type TypeRow = {
+  type: string;
+  sessionsCount: number;
+  hours: number;
+  reserved: number;
+  capacity: number;
+  fillRate: number;
+  present: number;
+  absent: number;
+};
+
+type ClubSettingsDto = {
+  clubName: string;
+  address: string;
+  contactEmail: string;
+  contactPhone: string;
+  timezone: string;
+  maxBookingsPerWeek: number;
+  bookingCutoffHours: number;
+  cancelCutoffHours: number;
+  updatedAt: string;
+};
+
 export {
     IUser,
     CreateUserBody,
@@ -183,5 +217,8 @@ export {
     UpdateUserBody,
     CreateSessionInput,
     SessionLean,
-    TrainerOverviewItem
+    TrainerOverviewItem,
+    DayRow,
+    TypeRow,
+    ClubSettingsDto
 }

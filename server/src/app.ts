@@ -9,6 +9,10 @@ import attendanceRouter from "./routes/attendance.routes";
 import trainerReportsRouter from "./routes/trainer.reports.routes";
 import adminDashboardRouter from "./routes/admin.dashboard.routes";
 import adminTrainersRouter from "./routes/admin.trainers.routes";
+import adminClassesRouter from "./routes/admin.classes.routes";
+import offerRouter from "./routes/offer.routes";
+import adminReportsRouter from "./routes/admin.reports.routes";
+import adminSettingsRouter from "./routes/admin.settings.routes";
 
 
 export const createApp = () => {
@@ -25,12 +29,17 @@ export const createApp = () => {
   app.use("/api/admin/users", adminUsersRouter);
   app.use("/api/admin/dashboard", adminDashboardRouter);
   app.use("/api/admin/trainers", adminTrainersRouter);
+  app.use("/api/admin/classes", adminClassesRouter);
+  app.use("/api/admin/reports", adminReportsRouter);
+  app.use("/api/admin/settings", adminSettingsRouter);
 
   // SCHEDULE
   app.use("/api/schedule", scheduleRouter);
 
   // USER
   app.use("/api/users", usersRouter);
+  app.use("/api/offer", offerRouter);
+
 
   // ATTENDANCE
    app.use("/api/trainer/attendance", attendanceRouter);

@@ -22,9 +22,12 @@ import IconButton from "@mui/material/IconButton";
 import type { Level, SessionType } from "@/api/schedule.api";
 import { useScheduleSessions } from "@/features/schedule/useScheduleSessions";
 import { useCreateScheduleSession } from "@/features/schedule/useCreateScheduleSession";
+import { useOfferTemplates } from "@/features/offer/useOfferTemplates";
+import type { OfferTemplateItem } from "@/types/offerTemplates";
+
 
 const START_HOUR = 16;
-const END_HOUR = 22; // exclusive
+const END_HOUR = 22;
 
 const SLOTS: Array<{ hour: number; minute: number }> = Array.from(
   { length: (END_HOUR - START_HOUR) * 2 },
@@ -118,14 +121,14 @@ export default function TrainerCreateSessions() {
     [weekStart],
   );
 
-  // wybrany slot
+
   const [selected, setSelected] = useState<{
     dayIndex: number;
     hour: number;
     minute: number;
   } | null>(null);
 
-  // formularz
+
   const [name, setName] = useState("");
   const [type, setType] = useState<SessionType>("MMA");
   const [level, setLevel] = useState<Level>("beginner");
@@ -158,6 +161,19 @@ export default function TrainerCreateSessions() {
     });
   }
 
+  const templatesQ = useOfferTemplates();
+  const templates = templatesQ.data?.items ?? [];
+
+  const [templateId, setTemplateId] = useState<string>("");
+
+  function applyTemplate(t: OfferTemplateItem) {
+    setName(t.name);
+    setType(t.type);
+    setLevel(t.level);
+    setCapacity(t.defaultCapacity);
+    setDurationMin(t.durationMin);
+  }
+
   async function submit() {
     if (!selected) {
       setErrMsg("Najpierw wybierz slot w grafiku.");
@@ -180,7 +196,7 @@ export default function TrainerCreateSessions() {
       return;
     }
 
-    const weekday = selected.dayIndex + 1; // 1..7 (pon..nd)
+    const weekday = selected.dayIndex + 1;
     const startHour = selected.hour;
     const startMinute = selected.minute;
 
@@ -301,6 +317,35 @@ export default function TrainerCreateSessions() {
           </Typography>
 
           <Stack spacing={2}>
+
+            <FormControl fullWidth>
+            <InputLabel id="template-label">Szablon (opcjonalnie)</InputLabel>
+            <Select
+              labelId="template-label"
+              label="Szablon (opcjonalnie)"
+              value={templateId}
+              onChange={(e) => {
+                const id = e.target.value as string;
+                setTemplateId(id);
+
+                const t = templates.find((x) => x.id === id);
+                if (t) applyTemplate(t);
+              }}
+            >
+              <MenuItem value="">—</MenuItem>
+
+              {templates.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.name} ({t.type}/{t.level}, {t.durationMin} min, cap {t.defaultCapacity})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {templatesQ.isError && (
+            <Typography color="error" variant="body2">
+              Nie udało się pobrać szablonów oferty.
+            </Typography>
+          )}
             <TextField
               label="Nazwa zajęć"
               value={name}
