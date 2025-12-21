@@ -94,8 +94,6 @@ export const AdminTrainers = () => {
             </Typography>
           ) : null}
         </Stack>
-
-        {/* Filtry */}
         <Paper sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 3, backgroundColor: cardBg }} elevation={0}>
           <Box
             sx={{
@@ -154,7 +152,6 @@ export const AdminTrainers = () => {
           </Box>
         </Paper>
 
-        {/* Loading / Error */}
         {q.isLoading ? (
           <Box display="flex" justifyContent="center" py={6}>
             <CircularProgress />
@@ -167,7 +164,6 @@ export const AdminTrainers = () => {
           </Alert>
         ) : null}
 
-        {/* KPI + tabela */}
         {q.data ? (
           <>
             <Box

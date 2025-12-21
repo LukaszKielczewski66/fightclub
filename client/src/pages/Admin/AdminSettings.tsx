@@ -125,7 +125,6 @@ export const AdminSettings = () => {
 
         {q.isError ? <Alert severity="error">{getErrorMessage(q.error, "Nie udało się pobrać ustawień")}</Alert> : null}
 
-        {/* Dane klubu */}
         <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, backgroundColor: cardBg }}>
           <Typography variant="h6" sx={{ fontWeight: 900 }}>
             Dane klubu
@@ -162,7 +161,6 @@ export const AdminSettings = () => {
           </Stack>
         </Paper>
 
-        {/* Reguły zapisów */}
         <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, backgroundColor: cardBg }}>
           <Typography variant="h6" sx={{ fontWeight: 900 }}>
             Reguły zapisów
@@ -205,7 +203,6 @@ export const AdminSettings = () => {
           </Stack>
         </Paper>
 
-        {/* Wygląd */}
         <Paper elevation={0} sx={{ p: { xs: 2, md: 3 }, borderRadius: 3, backgroundColor: cardBg }}>
           <Typography variant="h6" sx={{ fontWeight: 900 }}>
             Wygląd aplikacji

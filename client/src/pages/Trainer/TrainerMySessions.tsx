@@ -164,18 +164,6 @@ export default function TrainerMySessions() {
                     <Typography variant="body2" color="text.secondary">
                       Uczestników: <strong>{reserved}</strong>
                     </Typography>
-
-                    {/* na razie pokazujemy ID uczestników (pod przyszłe widoki), ale możesz to ukryć */}
-                    {Array.isArray(s.participantsIds) && s.participantsIds.length > 0 && (
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          IDs uczestników:
-                        </Typography>
-                        <Typography variant="body2" sx={{ overflowWrap: "anywhere" }}>
-                          {s.participantsIds.join(", ")}
-                        </Typography>
-                      </Box>
-                    )}
                   </Stack>
                 </AccordionDetails>
               </Accordion>

@@ -78,7 +78,6 @@ export default function TrainerReports() {
 
   return (
     <Paper sx={{ p: 3, borderRadius: 3 }} elevation={0}>
-      {/* Header */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         alignItems={{ sm: "center" }}
@@ -122,7 +121,6 @@ export default function TrainerReports() {
 
       <Divider sx={{ my: 2 }} />
 
-      {/* Loading / Error */}
       {isLoading && (
         <Box sx={{ py: 6, display: "flex", justifyContent: "center" }}>
           <CircularProgress />
@@ -137,10 +135,8 @@ export default function TrainerReports() {
         </Alert>
       )}
 
-      {/* Content */}
       {data && (
         <>
-          {/* KPI cards */}
           <Box
             sx={{
               display: "grid",
@@ -186,7 +182,6 @@ export default function TrainerReports() {
             </Paper>
           </Box>
 
-          {/* Charts / summaries - 2 columns on md+ */}
           <Box
             sx={{
               mt: 2,
@@ -195,7 +190,6 @@ export default function TrainerReports() {
               gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
             }}
           >
-            {/* Bar chart */}
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
                 Obecni w tygodniu (per dzień)
@@ -230,8 +224,6 @@ export default function TrainerReports() {
                 * Jeśli nie oznaczono obecności, traktujemy zapisanych jako “nieobecnych” (do czasu oznaczenia).
               </Typography>
             </Paper>
-
-            {/* Day summary */}
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
                 Podsumowanie dni
@@ -252,7 +244,6 @@ export default function TrainerReports() {
             </Paper>
           </Box>
 
-          {/* Sessions table */}
           <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, mt: 2 }}>
             <Typography variant="subtitle1" gutterBottom>
               Zajęcia w tym tygodniu

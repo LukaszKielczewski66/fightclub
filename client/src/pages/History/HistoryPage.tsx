@@ -52,7 +52,6 @@ export default function HistoryPage() {
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
-  // zakres: max 30 dni wstecz (włącznie)
   const to = useMemo(() => startOfTodayLocal(), []);
   const from = useMemo(() => {
     const d = new Date(to);
@@ -60,15 +59,11 @@ export default function HistoryPage() {
     return d;
   }, [to]);
 
-  // endpoint filtruje po startAt: >= from i < to+1d (tu bierzemy to jako "dziś 00:00", więc bierzemy też dziś jeśli chcesz:
-  // jeśli chcesz "do teraz", użyj new Date() jako toIso.
   const fromIso = useMemo(() => from.toISOString(), [from]);
   const toIso = useMemo(() => new Date().toISOString(), []);
 
   const { data, isLoading, isError } = useMyBookings(fromIso, toIso);
 
-  // w historii przycisk "Wypisz" raczej bez sensu (bo to przeszłość),
-  // ale jeśli chcesz go zostawić (np. gdy sesja jeszcze dziś i user jednak zapisany), to zostawiam jako opcję:
   const unbookMut = useUnbookScheduleSession();
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
@@ -190,7 +185,6 @@ export default function HistoryPage() {
                       Koniec: <strong>{fmtDateTime(s.endAt)}</strong>
                     </Typography>
 
-                    {/* Opcjonalnie: pozwól wypisać się tylko jeśli jeszcze nie minęły */}
                     {!isPast && (
                       <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
                         <Button

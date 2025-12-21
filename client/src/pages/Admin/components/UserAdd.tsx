@@ -285,7 +285,7 @@ export default function UserAdd() {
         open={successOpen}
         autoHideDuration={4000}
         onClose={() => setSuccessOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }} // opcjonalnie
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert
           onClose={() => setSuccessOpen(false)}
@@ -301,7 +301,7 @@ export default function UserAdd() {
         open={errorOpen}
         autoHideDuration={4000}
         onClose={() => setErrorOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }} // opcjonalnie
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
       >
         <Alert
           onClose={() => setErrorOpen(false)}

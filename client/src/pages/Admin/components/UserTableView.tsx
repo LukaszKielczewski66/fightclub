@@ -1,4 +1,3 @@
-// src/features/admin/UsersTableView.tsx
 import {
   Paper,
   Table,

@@ -101,7 +101,6 @@ export const AdminDashboard = () => {
           </Typography>
         </Stack>
 
-        {/* KPI */}
         <Box
           sx={{
             display: "grid",

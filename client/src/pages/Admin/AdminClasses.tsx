@@ -162,7 +162,6 @@ export const AdminClasses = () => {
           Oferta — szablony zajęć
         </Typography>
 
-        {/* Add template */}
         <Paper
           elevation={0}
           sx={{
@@ -243,7 +242,6 @@ export const AdminClasses = () => {
           </Box>
         </Paper>
 
-        {/* Filters + list */}
         <Paper
           elevation={0}
           sx={{
@@ -433,7 +431,6 @@ export const AdminClasses = () => {
           </DialogActions>
         </Dialog>
 
-        {/* snackbars */}
         <Snackbar open={okOpen} autoHideDuration={3500} onClose={() => setOkOpen(false)}>
           <Alert severity="success" variant="filled">
             Zapisano.

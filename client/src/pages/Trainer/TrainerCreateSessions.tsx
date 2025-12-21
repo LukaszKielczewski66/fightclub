@@ -68,12 +68,12 @@ function isSlotBlockedByAnySession(
   slotStart: Date,
 ) {
   const slotEnd = new Date(slotStart);
-  slotEnd.setTime(slotStart.getTime() + 30 * 60 * 1000); // +30 min
+  slotEnd.setTime(slotStart.getTime() + 30 * 60 * 1000);
 
   return sessions.some((s) => {
     const a = new Date(s.startAt).getTime();
     const b = new Date(s.endAt).getTime();
-    return a < slotEnd.getTime() && b > slotStart.getTime(); // overlap
+    return a < slotEnd.getTime() && b > slotStart.getTime();
   });
 }
 
@@ -291,7 +291,7 @@ export default function TrainerCreateSessions() {
           alignItems: "start",
         }}
       >
-        {/* FORM */}
+
         <Paper
           elevation={0}
           sx={{
@@ -406,7 +406,6 @@ export default function TrainerCreateSessions() {
           </Stack>
         </Paper>
 
-        {/* GRID */}
         <Paper
           elevation={0}
           sx={{
