@@ -221,7 +221,6 @@ export default function TrainerReports() {
               </Stack>
 
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2 }}>
-                * Jeśli nie oznaczono obecności, traktujemy zapisanych jako “nieobecnych” (do czasu oznaczenia).
               </Typography>
             </Paper>
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>

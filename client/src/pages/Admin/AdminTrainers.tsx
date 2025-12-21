@@ -184,7 +184,7 @@ export const AdminTrainers = () => {
                 Lista trenerów
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Tydzień: zajęcia / godziny / obłożenie + Last30.
+                Tydzień: zajęcia / godziny / obłożenie
               </Typography>
               <Divider sx={{ mb: 2 }} />
 
@@ -239,7 +239,7 @@ export const AdminTrainers = () => {
                         <Chip label={`Tydz: ${t.week.sessionsCount} zaj.`} />
                         <Chip label={`Godz: ${t.week.hours}h`} />
                         <Chip label={`Obł: ${t.week.fillRate}%`} />
-                        <Chip label={`Last30: ${t.last30.fillRate}%`} variant="outlined" />
+
                       </Box>
                     </Stack>
                   </Paper>
