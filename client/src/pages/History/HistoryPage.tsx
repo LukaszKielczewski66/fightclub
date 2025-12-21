@@ -15,7 +15,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { alpha } from "@mui/material/styles";
 import { useMemo, useState } from "react";
 
-import type { Level } from "@/api/schedule.api";
+import type { Level } from "@/types/schedule";
 import { useMyBookings } from "@/features/schedule/useMyBookings";
 import { useUnbookScheduleSession } from "@/features/schedule/useUnbookScheduleSession";
 

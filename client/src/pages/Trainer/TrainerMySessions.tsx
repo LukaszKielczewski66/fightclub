@@ -16,7 +16,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import { alpha } from "@mui/material/styles";
 import { useMemo } from "react";
 import { useMySessions } from "@/features/schedule/useMySessions";
-import type { Level } from "@/api/schedule.api";
+import type { Level } from "@/types/schedule";
 
 function levelLabel(level: Level) {
   if (level === "beginner") return "Początkujący";

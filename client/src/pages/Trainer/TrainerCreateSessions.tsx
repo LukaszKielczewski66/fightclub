@@ -19,7 +19,7 @@ import { useMemo, useState } from "react";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import IconButton from "@mui/material/IconButton";
-import type { Level, SessionType } from "@/api/schedule.api";
+import type { Level, SessionType } from "@/types/schedule";
 import { useScheduleSessions } from "@/features/schedule/useScheduleSessions";
 import { useCreateScheduleSession } from "@/features/schedule/useCreateScheduleSession";
 import { useOfferTemplates } from "@/features/offer/useOfferTemplates";
