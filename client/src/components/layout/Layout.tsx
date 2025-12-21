@@ -42,6 +42,7 @@ type NavItem = {
   to: string;
   icon?: React.ReactNode;
   roles: Array<Role | "*">;
+  end?: boolean
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -53,7 +54,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Historia", to: "/user/history", icon: <HistoryIcon />, roles: ["user"] },
 
   // TRAINER
-  { label: "Profil trenera", to: "/trainer", icon: <PersonIcon />, roles: ["trainer"] },
+  { label: "Profil trenera", to: "/trainer", icon: <PersonIcon />, roles: ["trainer"], end: true },
   {
     label: "Dodaj zajęcia",
     to: "/trainer/schedule",
@@ -80,8 +81,7 @@ const NAV_ITEMS: NavItem[] = [
   },
 
   // ADMIN
-  // ADMIN
-  { label: "Dashboard", to: "/admin", icon: <AdminPanelSettingsIcon />, roles: ["admin"] },
+  { label: "Dashboard", to: "/admin", icon: <AdminPanelSettingsIcon />, roles: ["admin"], end: true },
   { label: "Użytkownicy", to: "/admin/users", icon: <PersonIcon />, roles: ["admin"] },
   { label: "Trenerzy", to: "/admin/trainers", icon: <PersonIcon />, roles: ["admin"] },
   { label: "Oferta", to: "/admin/classes", icon: <EventNoteIcon />, roles: ["admin"] },
@@ -138,6 +138,7 @@ export default function Layout() {
                 key={item.to}
                 component={NavLink}
                 to={item.to}
+                end={item.end}
                 startIcon={item.icon}
                 sx={activeSx}
                 color="inherit"
@@ -219,6 +220,7 @@ export default function Layout() {
                 key={item.to}
                 component={NavLink}
                 to={item.to}
+                end={item.end}
                 onClick={() => setDrawerOpen(false)}
                 sx={activeSx}
               >
